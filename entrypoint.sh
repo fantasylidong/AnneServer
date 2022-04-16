@@ -12,7 +12,7 @@ if [ ! -d "/home/louis/l4d2/left4dead2/addons/sourcemod/" ];
 then
 	if [ "$plugin" = "anne" ];
 	then
-		cp  -r /home/louis/anne/* l4d2/
+		cp  -r /home/louis/AnneServer/* l4d2/
 		echo "anne plugins packge installed"
 	fi
 

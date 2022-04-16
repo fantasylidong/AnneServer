@@ -27,4 +27,5 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: morzlee/AnneServer:test
+          file: Dockerfiletest
+          tags: morzlee/anneserver:test

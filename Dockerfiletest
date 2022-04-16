@@ -32,7 +32,7 @@ ENV PORT=2333 \
     plugin="null" \
 	steamid="STEAM_1:1:121430603" \
 	password="123456" \
-	steamgroup="25622692,26419628" \
+	steamgroup="25622692,26419628"
 
 ADD entrypoint.sh entrypoint.sh
 ENTRYPOINT ./entrypoint.sh

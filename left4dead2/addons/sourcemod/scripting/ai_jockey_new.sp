@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "Ai_Jockey增强",
 	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白",
 	description 	= "觉得Ai猴子太弱了？ Try this！",
-	version 		= "1.0.1.0",
+	version 		= "22-4-17",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
@@ -72,7 +72,7 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 {
 	if (IsAiJockey(jockey))
 	{
-		float fSpeed[3], fCurrentSpeed, fJockeyPos[3], fTargetAngles[3];
+		float fSpeed[3], fCurrentSpeed, fJockeyPos[3];
 		GetEntPropVector(jockey, Prop_Data, "m_vecVelocity", fSpeed);
 		fCurrentSpeed = SquareRoot(Pow(fSpeed[0], 2.0) + Pow(fSpeed[1], 2.0));
 		GetClientAbsOrigin(jockey, fJockeyPos);
@@ -108,21 +108,6 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 				}
 			}
 		}
-		else
-		{
-			// 选择最近目标
-			int iNewTarget = GetClosestSurvivor(fJockeyPos);
-			if (iNewTarget > 0)
-			{
-				if (GetEntProp(jockey, Prop_Send, "m_hasVisibleThreats") != 0)
-				{
-					// 锁定视野
-					ComputeAimAngles(jockey, iNewTarget, fTargetAngles, AimChest);
-					fTargetAngles[2] = 0.0;
-					TeleportEntity(jockey, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
-				}
-			}
-		}
 		if (GetEntityMoveType(jockey) & MOVETYPE_LADDER)
 		{
 			buttons &= ~IN_JUMP;
@@ -130,7 +115,6 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 		}
 		if (iFlags == FL_JUMPING)
 		{
-			// 增加是否被推的判断，否则猴子被推时会滞空
 				int NewTarget = NearestSurvivor(jockey);	float fTargetPos[3];
 				if (NewTarget > 0)
 				{
@@ -351,60 +335,4 @@ void ClientPush(int client, float fForwardVec[3])
 		fCurVelVec[i] += fForwardVec[i];
 	}
 	TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fCurVelVec);
-}
-
-int GetClosestSurvivor(float refpos[3], int excludeSur = -1)
-{
-	float surPos[3];	int closetSur = GetRandomSurvivor();
-	if (closetSur == 0)
-	{
-		return 0;
-	}
-	GetClientAbsOrigin(closetSur, surPos);
-	int iClosetAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));
-	for (int client = 1; client < MaxClients; client++)
-	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && client != excludeSur)
-		{
-			GetClientAbsOrigin(client, surPos);
-			int iAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));
-			if (iClosetAbsDisplacement < 0)
-			{
-				iClosetAbsDisplacement = iAbsDisplacement;
-				closetSur = client;
-			}
-			else if (iAbsDisplacement < iClosetAbsDisplacement)
-			{
-				iClosetAbsDisplacement = iAbsDisplacement;
-				closetSur = client;
-			}
-		}
-	}
-	return closetSur;
-}
-
-void ComputeAimAngles(int client, int target, float angles[3], AimType type = AimEye)
-{
-	if(client<0||client>MaxClients||target<0||target>MaxClients)
-		return;
-	float selfpos[3], targetpos[3], lookat[3];
-	GetClientEyePosition(client, selfpos);
-	switch (type)
-	{
-		case AimEye:
-		{
-			GetClientEyePosition(target, targetpos);
-		}
-		case AimBody:
-		{
-			GetClientAbsOrigin(target, targetpos);
-		}
-		case AimChest:
-		{
-			GetClientAbsOrigin(target, targetpos);
-			targetpos[2] += 45.0;
-		}
-	}
-	MakeVectorFromPoints(selfpos, targetpos, lookat);
-	GetVectorAngles(lookat, angles);
 }

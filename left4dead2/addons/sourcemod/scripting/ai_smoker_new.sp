@@ -25,7 +25,7 @@ public Plugin myinfo =
 	name 			= "Ai_Smoker增强",
 	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白",
 	description 	= "觉得Ai舌头太弱了？ Try this！",
-	version 		= "1.0.1.0",
+	version 		= "22-4-17",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
@@ -481,49 +481,6 @@ bool IsIncapped(int client)
 {
     return view_as<bool>(GetEntProp(client, Prop_Send, "m_isIncapacitated"));
 }
-	/*
-// 是否两者可见？
-bool IsVisible(int client, int target)
-{
-	bool bCanSee = false;
-	float selfpos[3], targetpos[3];
-	//float selfpos[3], targetpos[3], lookat[3], angles[3];
-	GetClientEyePosition(client, selfpos);
-	GetClientAbsOrigin(target, targetpos);
-	targetpos[2]+=45.0;
-	//MakeVectorFromPoints(selfpos, targetpos, lookat);
-	//GetVectorAngles(lookat, angles);
-	float fMins[3] = {0.0}, fMaxs[3] = {0.0};
-	fMins[0] = fMins[1] = -10.0;
-	fMins[2] = 0.0;
-	fMaxs[0] = fMaxs[1] = 10.0;
-	fMaxs[2] = 10.0;
-	TR_TraceHullFilter(selfpos, targetpos, fMins, fMaxs, MASK_NPCSOLID_BRUSHONLY, TraceRay_NoPlayers, client);
-	if (!TR_DidHit())
-	{
-			bCanSee = true;
-	}
-
-	Handle hTrace = TR_TraceRayFilterEx(selfpos, angles, MASK_SOLID, RayType_Infinite, traceFilter, client);
-	if (TR_DidHit(hTrace))
-	{
-		int hit = TR_GetEntityIndex(hTrace);
-		if (hit == target)
-		{
-			bCanSee = true;
-		}
-	}
-	delete hTrace;
-	
-	return bCanSee;
-}
-*/
-/*
-bool traceFilter(int entity, int mask, int self)
-{
-	return entity != self;
-}
-*/
 
 public bool TraceRay_NoPlayers(int entity, int mask, any data)
 {

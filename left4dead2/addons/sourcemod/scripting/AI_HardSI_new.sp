@@ -72,7 +72,7 @@ public Plugin myinfo =
 	name 			= "Advance Special Infected AI",
 	author 			= "def075, Caibiii, 夜羽真白",
 	description 	= "Advanced Special Infected AI",
-	version 		= "2022.03.03",
+	version 		= "2022.04.17",
 	url 			= "https://github.com/GlowingTree880/L4D2_LittlePlugins"
 }
 
@@ -525,6 +525,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 			int targetclient = 0, hittimes = 0, survivorcount = 0;
 			float selfpos[3] = {0.0}, targetpos[3] = {0.0}, aimangles[3] = {0.0};
 			GetClientAbsOrigin(client, selfpos);
+			// 射线，坦克 z 高度 +100，作为石头出手高度
 			selfpos[2] += TANKTHROWHEIGHT;
 			// 2022-4-8更新：判断目标有效，判断目标是否可见
 			for (int survivor = 1; survivor <= MaxClients; survivor++)
@@ -561,7 +562,6 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 							if (IsValidSurvivor(newtarget))
 							{
 								GetClientAbsOrigin(newtarget, targetpos);
-								// 射线，坦克 z 高度 +115，作为石头出手高度
 								targetpos[2] += SURVIVORHEIGHT;
 								hTrace = TR_TraceRayFilterEx(selfpos, targetpos, MASK_NPCSOLID_BRUSHONLY, RayType_EndPoint, traceFilter, client);
 								if (!TR_DidHit(hTrace))
@@ -597,7 +597,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 			// 撞击次数和生还者数相等，所有生还者皆在障碍后，取最近目标
 			if (hittimes == survivorcount)
 			{
-				//PrintToConsoleAll("[Ai-Tank]：所有生还者均被遮挡，锁定目标于最近生还者身上");
+				// PrintToConsoleAll("[Ai-Tank]：所有生还者均被遮挡，锁定目标于最近生还者身上");
 				int nearesttarget = GetNearestSurvivor(client);
 				if (IsValidSurvivor(nearesttarget))
 				{
@@ -613,7 +613,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 				GetClientAbsOrigin(client, selfpos);
 				if (targetclient == 0)
 				{
-					//PrintToConsoleAll("[Ai-Tank]：所有生还均被遮挡，随机选取最近生还者");
+					// PrintToConsoleAll("[Ai-Tank]：所有生还均被遮挡，随机选取最近生还者");
 					targetclient = GetNearestSurvivor(client);
 				}
 				if (IsValidSurvivor(targetclient))
@@ -627,13 +627,13 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 					// 距离小于 300，则说明离生还较近，直接瞄准生还下部即可
 					if (dist <= 250)
 					{
-						//PrintToConsoleAll("[Ai-Tank]：克与最近生还距离小于 300");
+						// PrintToConsoleAll("[Ai-Tank]：克与最近生还距离小于 300");
 						ComputeAimAngles(client, targetclient, aimangles, AimBody);
 						aimangles[0] += 20.0;
 					}
 					else if ((dist / 1000) == 0)
 					{
-						//PrintToConsoleAll("[Ai-Tank]：克与最近生还者距离小于 1000，距离：%d，除以 1000：%d", dist, dist / 1000);
+						// PrintToConsoleAll("[Ai-Tank]：克与最近生还者距离小于 1000，距离：%d，除以 1000：%d", dist, dist / 1000);
 						aimangles[0] = 0.0;
 						aimangles[0] -= (dist * 0.0065);
 						// 高度相减小于 0，说明自身处于生还下方，高度相减大于 0，则在生还上方
@@ -641,30 +641,30 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 						{
 							if (height < 0.0 && height < -100.0)
 							{
-								//PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，且距离小于1000");
+								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，且距离小于1000");
 								aimangles[0] = 0.0;
 								aimangles[0] -= 0.070 * FloatAbs(height);
 							}
 							else if (height < 0.0 && height > -100.0)
 							{
-								//PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，height：%.2f，且距离小于1000", height);
-								aimangles[0] -= 0.045 * FloatAbs(height);
+								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，height：%.2f，且距离小于1000", height);
+								aimangles[0] -= 0.035 * FloatAbs(height);
 							}
 							else if (height > 0.0 && height > 100.0)
 							{
 								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还上方，且距离小于1000");
-								aimangles[0] += 0.040 * height;
+								aimangles[0] += 0.045 * height;
 							}
 							else if (height > 0.0 && height < 100.0)
 							{
-								//PrintToConsoleAll("[Ai-Tank]：克的位置位于生还上方，height：%.2f，且距离小于1000", height);
+								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还上方，height：%.2f，且距离小于1000", height);
 								aimangles[0] += 0.080 * height;
 							}
 						}
 					}
 					else
 					{
-						//PrintToConsoleAll("[Ai-Tank]：克与最近生还者距离大于 1000，距离：%d，除以 1000：%d", dist, dist / 1000);
+						// PrintToConsoleAll("[Ai-Tank]：克与最近生还者距离大于 1000，距离：%d，除以 1000：%d", dist, dist / 1000);
 						int times = dist / 1000;
 						aimangles[0] = 0.0;
 						aimangles[0] -= ((dist * 0.0070) + (2.35 * times));
@@ -672,28 +672,28 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 						{
 							if (height < 0.0 && height < -100.0)
 							{
-								//PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，且距离大于1000");
+								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，且距离大于1000");
 								aimangles[0] = 0.0;
 								aimangles[0] -= 0.070 * FloatAbs(height);
 							}
 							else if (height < 0.0 && height > -100.0)
 							{
-								//PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，height：%.2f，且距离大于1000", height);
-								aimangles[0] -= 0.060 * FloatAbs(height);
+								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，height：%.2f，且距离大于1000", height);
+								aimangles[0] -= 0.040 * FloatAbs(height);
 							}
 							else if (height > 0.0 && height > 100.0)
 							{
 								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还上方，且距离大于1000");
-								aimangles[0] += 0.030 * height;
+								aimangles[0] += 0.050 * height;
 							}
 							else if (height > 0.0 && height < 100.0)
 							{
 								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还上方，height：%.2f，且距离大于1000", height);
-								aimangles[0] += 0.125 * height;
+								aimangles[0] += 0.120 * height;
 							}
 						}
 					}
-					//PrintToConsoleAll("[Ai-Tank]：计算得出的角度：%.2f %.2f %.2f", aimangles[0], aimangles[1], aimangles[2]);
+					// PrintToConsoleAll("[Ai-Tank]：计算得出的角度：%.2f %.2f %.2f", aimangles[0], aimangles[1], aimangles[2]);
 					TeleportEntity(client, NULL_VECTOR, aimangles, NULL_VECTOR);
 					return Plugin_Changed;
 				}

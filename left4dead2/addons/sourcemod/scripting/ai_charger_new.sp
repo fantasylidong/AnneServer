@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "Ai-Charger增强",
 	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白",
 	description 	= "觉得Ai-Charger不够强？ Try this！",
-	version 		= "1.0.1.0",
+	version 		= "22-4-17",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
@@ -84,7 +84,7 @@ public Action OnPlayerRunCmd(int charger, int &buttons, int &impulse, float vel[
 {
 	if (IsAiCharger(charger))
 	{
-		float fChargerPos[3], fTargetAngles[3];
+		float fChargerPos[3];
 		GetClientAbsOrigin(charger, fChargerPos);
 		static float fLeftGroundMaxSpeed[MAXPLAYERS + 1];
 		// 获取状态
@@ -131,13 +131,6 @@ public Action OnPlayerRunCmd(int charger, int &buttons, int &impulse, float vel[
 				{
 					if (iFlags & FL_ONGROUND)
 					{
-						if (bHasSight)
-						{
-							// 锁定视野
-							ComputeAimAngles(charger, iTarget, fTargetAngles, AimChest);
-							fTargetAngles[2] = 0.0;
-							TeleportEntity(charger, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
-						}
 						buttons |= IN_JUMP;
 						buttons |= IN_DUCK;
 						if ((buttons & IN_FORWARD) || (buttons & IN_BACK) || (buttons & IN_MOVELEFT) || (buttons & IN_MOVERIGHT))
@@ -187,26 +180,11 @@ public Action OnPlayerRunCmd(int charger, int &buttons, int &impulse, float vel[
 					buttons &= ~IN_DUCK;
 				}
 			}
-			else
-			{
-				int iNewTarget = GetClosestSurvivor(fChargerPos);
-				ComputeAimAngles(charger, iNewTarget, fTargetAngles, AimChest);
-				fTargetAngles[2] = 0.0;
-				TeleportEntity(charger, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
-			}
 		}
 		else if (float(g_iStartChargeDistance) - 10.0 < fDistance < float(g_iStartChargeDistance) + 100.0 && fCurrentSpeed > 260.0)
 		{
 			if (iFlags & FL_ONGROUND)
 			{
-				//地方锁定视野
-				if (bHasSight)
-				{
-					// 锁定视野
-					ComputeAimAngles(charger, iTarget, fTargetAngles, AimChest);
-					fTargetAngles[2] = 0.0;
-					TeleportEntity(charger, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
-				}
 				//设置牛连跳上限
 				if (fLeftGroundMaxSpeed[charger] != -1.0)
 				{

@@ -12,7 +12,7 @@
 #define TEAM_INFECTED 3
 #define SMOKER_MELEE_RANGE 300
 #define SMOKER_ATTACK_COORDINATE 5.0
-
+#define SMOKER_TONGUE_DELAY 0.5
 enum AimType
 {
 	AimEye,
@@ -30,7 +30,7 @@ public Plugin myinfo =
 }
 
 // ConVars
-ConVar g_hTongueRange, g_hTargetChoose, g_hMeleeAvoid, g_hLeftDistance, g_hDistancePercent, g_hSmokerBhop, g_hSmokerBhopSpeed,g_hSmokerInterval;
+ConVar g_hTongueRange, g_hTargetChoose, g_hMeleeAvoid, g_hLeftDistance, g_hDistancePercent, g_hSmokerBhop, g_hSmokerBhopSpeed,g_hSmokerInterval,g_hCvarTongueDelay;
 // Ints
 int g_iTongueRange, g_iTargetChoose, g_iMellePlayer = -1, g_iValidSurvivor = 0;
 // Bools
@@ -48,11 +48,14 @@ public void OnPluginStart()
 	g_hLeftDistance = CreateConVar("ai_SmokerLeftBehindDistance", "5.0", "玩家距离团队多远判定为落后或超前", FCVAR_NOTIFY, true, 0.0);
 	g_hDistancePercent = CreateConVar("ai_SmokerDistantPercent", "0.80", "舌头如果处在这个系数 * 舌头长度的距离范围内，则会立刻拉人", FCVAR_NOTIFY, true, 0.0);
 	g_hTongueRange = FindConVar("tongue_range");
+	g_hCvarTongueDelay = FindConVar("smoker_tongue_delay"); 
+	SetConVarFloat(g_hCvarTongueDelay, SMOKER_TONGUE_DELAY);
 	// HookEvent
 	HookEvent("round_start", evtRoundStart);
 	HookEvent("player_spawn", evt_PlayerSpawn);
 	HookEvent("player_death", evt_PlayerDeath);
 	// AddChangeHooks
+	g_hCvarTongueDelay.AddChangeHook(ConVarChanged_Cvars);
 	g_hSmokerInterval.AddChangeHook(ConVarChanged_Cvars);
 	g_hSmokerBhop.AddChangeHook(ConVarChanged_Cvars);
 	g_hSmokerBhopSpeed.AddChangeHook(ConVarChanged_Cvars);
@@ -82,6 +85,8 @@ void ConVarChanged_Cvars(ConVar convar, const char[] oldValue, const char[] newV
 
 void GetCvars()
 {
+	//阻止重启后值被重载
+	SetConVarFloat(g_hCvarTongueDelay, SMOKER_TONGUE_DELAY);
 	g_bSmokerBhop = g_hSmokerBhop.BoolValue;
 	g_fSmokerInterval = g_hSmokerInterval.FloatValue;
 	g_fSmokerBhopSpeed = g_hSmokerBhopSpeed.FloatValue;

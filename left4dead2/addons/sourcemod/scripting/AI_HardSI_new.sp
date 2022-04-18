@@ -292,11 +292,15 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 // *********************
 public Action OnSmokerRunCmd(int client, int &buttons, float vel[3], float angles[3])
 {
-	float tonguerange = -1.0;
+	float tonguerange = -1.0,tongurtime=-1.0;
 	Action react = Plugin_Continue;
 	if (tonguerange < 0.0)
 	{
 		tonguerange = GetConVarFloat(FindConVar("tongue_range"));
+	}
+	if (tongurtime < 0.0)
+	{
+		tongurtime = GetConVarFloat(FindConVar("tongue_hit_delay"));
 	}
 	if (!(buttons & IN_ATTACK))
 	{
@@ -317,7 +321,7 @@ public Action OnSmokerRunCmd(int client, int &buttons, float vel[3], float angle
 				}
 				else if (dist < tonguerange)
 				{
-					if (GetGameTime() - GetSiAttackTime() < 5.0)
+					if (GetGameTime() - GetSiAttackTime() < tongurtime)
 					{
 						buttons |= IN_ATTACK;
 						react = Plugin_Changed;

@@ -32,6 +32,9 @@ int 	g_iRushTimes[MAXPLAYERS+1];
 int		g_iTanksCount;
 /*
 	ChangeLog:
+	1.6
+		去除tank在梯子上不能传送的限制（极少数情况tank在梯子上卡住了）
+		
 	1.5
 		修改tank传送可能被卡住的情况
 		
@@ -525,10 +528,6 @@ public void OnMapEnd() {
 	g_iTanksCount = 0;
 }
 
-stock bool IsOnLadder(int entity)
-{
-	return GetEntityMoveType(entity) == MOVETYPE_LADDER;
-}
 public Action Timer_CheckPos(Handle timer, int UserId)
 {
 	//PrintToConsoleAll("开始检查tank是否卡住");
@@ -542,7 +541,7 @@ public Action Timer_CheckPos(Handle timer, int UserId)
 		static float distance;
 		distance = GetVectorDistance(pos, g_pos[tank], false);
 		//PrintToConsoleAll("tank目前位置和前位置相差:%f",distance);
-		if (distance < g_hCvarNonStuckRadius.FloatValue && !IsIncappedNearBy(pos) && !IsTankAttacking(tank)&&!IsOnLadder(tank)) {
+		if (distance < g_hCvarNonStuckRadius.FloatValue && !IsIncappedNearBy(pos) && !IsTankAttacking(tank)) {
 			
 			if ( g_iStuckTimes[tank] > 2) {
 				TeleportTank(tank);

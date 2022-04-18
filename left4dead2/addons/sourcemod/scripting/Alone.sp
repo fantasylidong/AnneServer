@@ -600,7 +600,7 @@ public Action SafeRoomReset(Handle timer)
 		{
 			g_iTeleCount[client] = 0;
 		}
-		if (IsInfectedBot(client) && !IsPlayerAlive(client))
+		if (IsValidSurvivor(client) && !IsPlayerAlive(client))
 		{
 			L4D_RespawnPlayer(client);
 		}

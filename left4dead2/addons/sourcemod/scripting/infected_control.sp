@@ -576,7 +576,7 @@ public Action SafeRoomReset(Handle timer)
 		{
 			g_iTeleCount[client] = 0;
 		}
-		if (IsInfectedBot(client) && !IsPlayerAlive(client))
+		if (IsValidSurvivor(client) && !IsPlayerAlive(client))
 		{
 			L4D_RespawnPlayer(client);
 		}
@@ -789,7 +789,7 @@ bool CanBeTeleport(int client)
 	}
 }
 
-//3秒内以0.1s检测一次，29次没被看到，就可以传送了
+//5秒内以0.1s检测一次，49次没被看到，就可以传送了
 public Action Timer_PositionSi(Handle timer)
 {
 	for (int client = 1; client <= MaxClients; client++)
@@ -799,7 +799,7 @@ public Action Timer_PositionSi(Handle timer)
 			GetClientEyePosition(client, fSelfPos);
 			if (!PlayerVisibleTo(fSelfPos))
 			{
-				if (g_iTeleCount[client] > 29)
+				if (g_iTeleCount[client] > 49)
 				{
 					Debug_Print("%N开始传送",client);
 					if (!PlayerVisibleTo(fSelfPos) && !IsPinningSomeone(client))
@@ -823,7 +823,7 @@ bool IsSpitter(int client)
 {
 	if (IsInfectedBot(client) && IsPlayerAlive(client) && GetEntProp(client, Prop_Send, "m_zombieClass") == ZC_SPITTER)
 	{
-		g_iTeleCount[client] = 30;//给予spitter立即传送的权限
+		g_iTeleCount[client] = 50;//给予spitter立即传送的权限
 		return true;
 	}
 	else

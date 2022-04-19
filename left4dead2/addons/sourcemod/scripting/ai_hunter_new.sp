@@ -44,13 +44,13 @@ public void OnPluginStart()
 {
 	// CreateConVar
 	g_hHunterFastPounceDistance = CreateConVar("ai_HunterFastPounceDistance", "2000", "在距离目标多近Hunter开始快速突袭", FCVAR_NOTIFY, true, 0.0);
-	g_hPounceVerticalAngle = CreateConVar("ai_HunterPounceVerticalAngle", "7", "Hunter突袭的垂直角度限制", FCVAR_NOTIFY, true, 0.0);
+	g_hPounceVerticalAngle = CreateConVar("ai_HunterPounceVerticalAngle", "8", "Hunter突袭的垂直角度限制", FCVAR_NOTIFY, true, 0.0);
 	g_hPounceAngleMean = CreateConVar("ai_HunterPounceAngleMean", "10", "Hunter突袭的平均角度（由随机数发生器产生）", FCVAR_NOTIFY, true, 0.0);
 	g_hPounceAngleStd = CreateConVar("ai_HunterPounceAngleStd", "20", "Hunter突袭角度与平均角度的偏差（由随机数发生器产生）", FCVAR_NOTIFY, true, 0.0);
 	g_hStraightPounceDistance = CreateConVar("ai_HunterStraightPounceDistance", "200.0", "Hunter在离生还者多近时允许直扑", FCVAR_NOTIFY, true, 0.0);
 	g_hHunterAimOffset = CreateConVar("ai_HunterAimOffset", "360", "目标与Hunter处在这一角度范围内，Hunter将不会直扑", FCVAR_NOTIFY, true, 0.0);
 	g_hWallPounceDistance = CreateConVar("ai_HunterWallDetectDistance", "60", "在这个范围内，Hunter突袭时将会优先检测是否有墙体", FCVAR_NOTIFY);
-	g_hHunterTarget = CreateConVar("ai_HunterTarget", "1", "Hunter目标选择：1=自然目标选择，2=最近目标，3=手持非霰弹枪的生还者", FCVAR_NOTIFY, true, 1.0, true, 2.0);
+	g_hHunterTarget = CreateConVar("ai_HunterTarget", "3", "Hunter目标选择：1=自然目标选择，2=最近目标，3=手持非霰弹枪的生还者", FCVAR_NOTIFY, true, 1.0, true, 2.0);
 	g_hShotGunCheckRange = CreateConVar("ai_HunterShotGunCheckRange", "300.0", "目标选择为3时，Hunter在大于这个距离时允许进行目标枪械检测", FCVAR_NOTIFY, true, 0.0);
 	// HookEvents
 	HookEvent("player_spawn", evt_PlayerSpawn);
@@ -193,7 +193,7 @@ public Action L4D2_OnChooseVictim(int specialInfected, int &curTarget)
 							g_iMobileSurvivor = 0;
 							iTeamShotgunCount = 0;
 						}
-						if (curTarget)
+						if (curTarget>0)
 						{
 							// 检测目标是否手持霰弹枪
 							int iActiveWeapon = GetEntPropEnt(curTarget, Prop_Send, "m_hActiveWeapon");

@@ -34,6 +34,7 @@ Handle g_hVomitSurvivor;
 #define TEAM_SURVIVOR 2
 #define TEAM_INFECTED 3
 #define ZC_BOOMER 2
+#define FL_JUMPING 65922
 
 public void OnPluginStart()
 {
@@ -137,7 +138,7 @@ public Action OnPlayerRunCmd(int boomer, int &buttons, int &impulse, float vel[3
 							ClientPush(boomer, fBuffer);
 						}
 					}
-					else if (iFlags == 65922)
+					else if (iFlags == FL_JUMPING)
 					{
 						float iTargetDistance = GetVectorDistance(fTargetPos, fBoomerPos);
 						if (iTargetDistance < 100.0)

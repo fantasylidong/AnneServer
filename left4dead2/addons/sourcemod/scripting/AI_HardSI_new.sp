@@ -78,7 +78,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	g_hPlayBackRate = CreateConVar("ai_TankSequencePlayBackRate", "4.5", "坦克攀爬动画加速速率", FCVAR_NOTIFY, true, 0.0);
+	g_hPlayBackRate = CreateConVar("ai_TankSequencePlayBackRate", "3.0", "坦克攀爬动画加速速率", FCVAR_NOTIFY, true, 0.0);
 	g_hPlayBackRate.AddChangeHook(ConVarChanged_Cvars);
 	g_fPlayBackRate = g_hPlayBackRate.FloatValue;
 	HookEvent("round_start", evt_RoundStart, EventHookMode_Post);
@@ -219,8 +219,22 @@ public Action Timer_MapStartMoveSpeed(Handle timer)
 }
 
 // 动画序列：9=正常走路，49=单手举过头顶投掷，50=低抛，51=双手举过头顶投掷
-// 25=爬梯子，16=上低矮障碍物，19/20/21=爬墙/空调机/正常围栏，15=落地或上低矮障碍物，17=爬灌木/低矮围栏，22=爬房车，23=爬大货车
+// 25=爬梯子，16=上低矮障碍物，19/20/21=爬墙/空调机/正常围栏，15=落地或上低矮障碍物，17=爬灌木/低矮围栏，22=爬房车，23=爬大货车，梯子由于有ladderboost不用加了
 public void UpdateThink(int client)
+{
+	switch (GetEntProp(client, Prop_Send, "m_nSequence"))
+	{
+		case 18, 19, 20, 21, 22, 23:
+		{
+			SetEntPropFloat(client, Prop_Send, "m_flPlaybackRate", g_fPlayBackRate);
+		}
+		case 54, 55, 56, 57, 58, 59, 60:
+		{
+			SetEntPropFloat(client, Prop_Send, "m_flPlaybackRate", 999.0);
+		}
+	}
+}
+/*public void UpdateThink(int client)
 {
 	switch (GetEntProp(client, Prop_Send, "m_nSequence"))
 	{
@@ -233,7 +247,7 @@ public void UpdateThink(int client)
 			SetEntPropFloat(client, Prop_Send, "m_flPlaybackRate", 999.0);
 		}
 	}
-}
+}*/
 
 // *********************
 //		   主要

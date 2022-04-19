@@ -63,7 +63,7 @@ ConVar g_hPlayBackRate;
 // Ints
 int g_iState[MAXPLAYERS + 1][8];
 // Floats
-float g_fPlayBackRate, g_fDelay[MAXPLAYERS + 1][8], g_fSiAttackTime, g_fMoveGrad[MAXPLAYERS + 1][3], g_fMoveSpeed[MAXPLAYERS + 1], g_fPos[MAXPLAYERS + 1][3];
+float g_fPlayBackRate, g_fDelay[MAXPLAYERS + 1][8], g_fMoveGrad[MAXPLAYERS + 1][3], g_fMoveSpeed[MAXPLAYERS + 1], g_fPos[MAXPLAYERS + 1][3];
 // Bools
 bool g_bAiEnable[MAXPLAYERS + 1], g_bTankDelay[MAXPLAYERS + 1] = false;
 
@@ -254,10 +254,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			{
 				switch (zombieclass)
 				{
-					case ZC_SMOKER:
-					{
-						react = OnSmokerRunCmd(client, buttons, vel, angles);
-					}
 					case ZC_HUNTER:
 					{
 						react = OnHunterRunCmd(client, buttons, vel, angles);
@@ -276,11 +272,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					}
 				}
 			}
-			// 保存特感最近的一次攻击的时间戳
-			if (buttons & IN_ATTACK)
-			{
-				UpdateSiAttackTime();
-			}
+
 			return react;
 		}
 	}
@@ -290,58 +282,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 // *********************
 //	   单一特感处理
 // *********************
-public Action OnSmokerRunCmd(int client, int &buttons, float vel[3], float angles[3])
-{
-	float tonguerange = -1.0,tongurtime=-1.0;
-	Action react = Plugin_Continue;
-	if (tonguerange < 0.0)
-	{
-		tonguerange = GetConVarFloat(FindConVar("tongue_range"));
-	}
-	if (tongurtime < 0.0)
-	{
-		tongurtime = GetConVarFloat(FindConVar("tongue_hit_delay"));
-	}
-	if (!(buttons & IN_ATTACK))
-	{
-		if (DelayExpired(client, 0, 0.5) && GetEntityMoveType(client) != MOVETYPE_LADDER)
-		{
-			DelayStart(client, 0);
-			int target = GetClientAimTarget(client, true);
-			if (target > 0 && IsValidSurvivor(target) && IsVisibleTo(client, target))
-			{
-				float targetpos[3] = 0.0, selfpos[3] = 0.0, dist = 0.0;
-				GetClientAbsOrigin(client, selfpos);
-				GetClientAbsOrigin(target, targetpos);
-				dist = GetVectorDistance(selfpos, targetpos, false);
-				if (dist < SMOKERMELEERANGE)
-				{
-					buttons |= IN_ATTACK | IN_ATTACK2;
-					react = Plugin_Changed;
-				}
-				else if (dist < tonguerange)
-				{
-					if (GetGameTime() - GetSiAttackTime() < tongurtime)
-					{
-						buttons |= IN_ATTACK;
-						react = Plugin_Changed;
-					}
-					else
-					{
-						int aimtarget = GetClientAimTarget(target, true);
-						if (aimtarget == client)
-						{
-							buttons |= IN_ATTACK;
-							react = Plugin_Changed;
-						}
-					}
-				}
-			}
-		}
-	}
-	return react;
-}
-
 public Action OnJockeyRunCmd(int client, int &buttons, float vel[3], float angles[3])
 {
 	if (GetMoveSpeed(client) > JOCKEYMINSPEED && (buttons & IN_FORWARD) && (GetEntityFlags(client) & FL_ONGROUND) && (GetEntityMoveType(client) != MOVETYPE_LADDER) 
@@ -843,45 +783,11 @@ int GetState(int client, int number)
 	return view_as<int>(g_iState[client][number]);
 }
 
-// 保存当前一个特感开始攻击时的时间戳
-void UpdateSiAttackTime()
-{
-	g_fSiAttackTime = GetGameTime();
-}
-
-float GetSiAttackTime()
-{
-	return view_as<float>(g_fSiAttackTime);
-}
-
 float GetMoveSpeed(int client)
 {
 	return view_as<float>(g_fMoveSpeed[client]);
 }
 
-bool IsVisibleTo(int client, int target)
-{
-	bool bCanSee = false;
-	float selfpos[3], angles[3];
-	GetClientEyePosition(client, selfpos);
-	ComputeAimAngles(client, target, angles);
-	Handle hTrace = TR_TraceRayFilterEx(selfpos, angles, MASK_SOLID, RayType_Infinite, TraceFilter, client);
-	if (TR_DidHit(hTrace))
-	{
-		int hit = TR_GetEntityIndex(hTrace);
-		if (hit == target)
-		{
-			bCanSee = true;
-		}
-	}
-	delete hTrace;
-	return bCanSee;
-}
-
-bool TraceFilter(int entity, int mask, int self)
-{
-	return entity != self;
-}
 
 bool IsIncapped(int client)
 {

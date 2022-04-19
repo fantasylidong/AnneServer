@@ -166,7 +166,7 @@ public Action OnPlayerRunCmd(int smoker, int &buttons, int &impulse, float vel[3
 					buttons |= IN_ATTACK2;
 					buttons |= IN_ATTACK;
 					bCanSmoker[smoker]=false;
-					CreateTimer(g_fSmokerInterval,CoolDown,smoker);
+					CreateTimer(3.0,CoolDown,smoker);
 					return Plugin_Changed;
 				}
 			}
@@ -176,6 +176,8 @@ public Action OnPlayerRunCmd(int smoker, int &buttons, int &impulse, float vel[3
 		if (iVictim > 0)
 		{
 			g_iMellePlayer = -1;
+			bCanSmoker[smoker]=false;
+			CreateTimer(g_fSmokerInterval,CoolDown,smoker);
 		}
 	}
 	return Plugin_Continue;

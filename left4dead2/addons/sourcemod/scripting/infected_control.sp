@@ -449,21 +449,6 @@ public void addlimit(int iZombieClass){
 }
 
 
-
-
-// 禁推口水
-public Action L4D_OnShovedBySurvivor(int client, int victim, const float vecDir[3])
-{
-	if (IsSpitter(victim))
-	{
-		return Plugin_Handled;
-	}
-	else
-	{
-		return Plugin_Continue;
-	}
-}
-
 public Action L4D2_OnEntityShoved(int client, int entity, int weapon, float vecDir[3], bool bIsHighPounce)
 {
 	if (IsSpitter(entity))

@@ -5,6 +5,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <left4dhooks>
+#include <l4d2_saferoom_detect>
 
 #define CVAR_FLAG FCVAR_NOTIFY
 #define TEAM_SURVIVOR 2
@@ -28,7 +29,7 @@ public Plugin myinfo =
 }
 
 // Cvars
-ConVar g_hSpawnDistanceMin, g_hSpawnDistanceMax, g_hTeleportSi, g_hTeleportDistance, g_hSiLimit, g_hSiInterval, g_hMaxPlayerZombies, g_hSpawnMax;
+ConVar g_hSpawnDistanceMin, g_hSpawnDistanceMax, g_hTeleportSi, g_hTeleportDistance, g_hSiLimit, g_hSiInterval, g_hMaxPlayerZombies;
 // Ints
 int g_iSiLimit,iWaveTime,
 g_iTeleCount[MAXPLAYERS + 1] = {0}, g_iTargetSurvivor = -1, g_iSpawnMaxCount = 0, g_iSurvivorNum = 0, g_iSurvivors[MAXPLAYERS + 1] = {0};
@@ -63,7 +64,7 @@ public void OnPluginStart()
 	g_hTeleportDistance = CreateConVar("inf_TeleportDistance", "800.0", "特感落后于最近的生还者超过这个距离则将它们传送", CVAR_FLAG, true, 0.0);
 	g_hSiLimit = CreateConVar("l4d_infected_limit", "6", "一次刷出多少特感", CVAR_FLAG, true, 0.0);
 	g_hSiInterval = CreateConVar("versus_special_respawn_interval", "16.0", "对抗模式下刷特时间控制", CVAR_FLAG, true, 0.0);
-	g_hSpawnMax = CreateConVar("spawn_count_max", "0", "此值记录特感找位次数，根据此值动态改变刷新距离", ~ CVAR_FLAG, true, 0.0);
+//	g_hSpawnMax = CreateConVar("spawn_count_max", "0", "此值记录特感找位次数，根据此值动态改变刷新距离", ~ CVAR_FLAG, true, 0.0);
 	g_hMaxPlayerZombies = FindConVar("z_max_player_zombies");
 	SetConVarInt(FindConVar("director_no_specials"), 1);
 	// HookEvents
@@ -291,15 +292,17 @@ public void OnGameFrame()
 							if (iZombieClass > 0&&g_iSpawnMaxCount > 0)
 							{
 								int entityindex = L4D2_SpawnSpecial(iZombieClass, fSpawnPos, view_as<float>({0.0, 0.0, 0.0}));
+								if (SAFEDETECT_IsEntityInEndSaferoom(entityindex))
+								{
+									ForcePlayerSuicide(entityindex);
+									//PrintToConsoleAll("[Infected-Spawn]：阳间模式：特感：%s，位置：%.2f，%.2f，%.2f，刷新在终点安全屋内，强制处死", classname, fSpawnPos[0], fSpawnPos[1], fSpawnPos[2]);
+									return;
+								}
 								if (IsValidEntity(entityindex) && IsValidEdict(entityindex))
 								{
 									g_iSpawnMaxCount -= 1;
 									addlimit(iZombieClass);
-									print_type(iZombieClass,g_hSpawnMax.IntValue,g_fSpawnDistanceMax);
-									if (g_hSpawnMax.IntValue < 50)
-									{
-										g_hSpawnMax.IntValue = 0;
-									}
+									print_type(iZombieClass,g_fSpawnDistanceMax);
 								}
 							}
 						}
@@ -354,7 +357,7 @@ public void ResetInfectedNumber(){
 	iChargerLimit=iChargers;
 }
 
-public void print_type(int iType,int time,float g_fSpawnDistanceMax1){
+public void print_type(int iType,float g_fSpawnDistanceMax1){
 	char sTime[32];
 	FormatTime(sTime, sizeof(sTime), "%I-%M-%S", GetTime()); 
 	int iBoomers = 0, iSmokers = 0, iHunters = 0, iSpitters = 0, iJockeys = 0, iChargers = 0;
@@ -394,27 +397,27 @@ public void print_type(int iType,int time,float g_fSpawnDistanceMax1){
 	}
 	if (iType == 1)
 	{
-			Debug_Print("%s:生成一只Smoker，当前Smoker数量：%d,特感总数量 %d,刷特进行的找位次数：%d 找位最大单位距离：%f",sTime,iSmokers,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,time,g_fSpawnDistanceMax1);
+			Debug_Print("%s:生成一只Smoker，当前Smoker数量：%d,特感总数量 %d,找位最大单位距离：%f",sTime,iSmokers,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,g_fSpawnDistanceMax1);
 	}
 	else if (iType == 2)
 	{
-			Debug_Print("%s:生成一只Boomer，当前Boomer数量：%d,特感总数量 %d,刷特进行的找位次数：%d 找位最大单位距离：%f",sTime,iBoomers,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,time,g_fSpawnDistanceMax1);
+			Debug_Print("%s:生成一只Boomer，当前Boomer数量：%d,特感总数量 %d, 找位最大单位距离：%f",sTime,iBoomers,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,g_fSpawnDistanceMax1);
 	}
 	else if (iType == 3)
 	{
-			Debug_Print("%s:生成一只Hunter，当前Hunter数量：%d,特感总数量 %d,刷特进行的找位次数：%d 找位最大单位距离：%f",sTime,iHunters,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,time,g_fSpawnDistanceMax1);
+			Debug_Print("%s:生成一只Hunter，当前Hunter数量：%d,特感总数量 %d, 找位最大单位距离：%f",sTime,iHunters,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,g_fSpawnDistanceMax1);
 	}
 	else if (iType == 4)
 	{
-			Debug_Print("%s:生成一只Spitter，当前Spitter数量：%d,特感总数量 %d,刷特进行的找位次数：%d 找位最大单位距离：%f",sTime,iSpitters,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,time,g_fSpawnDistanceMax1);
+			Debug_Print("%s:生成一只Spitter，当前Spitter数量：%d,特感总数量 %d, 找位最大单位距离：%f",sTime,iSpitters,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,g_fSpawnDistanceMax1);
 	}
 	else if (iType == 5)
 	{
-			Debug_Print("%s:生成一只Jockey，当前Jockey数量：%d,特感总数量 %d,刷特进行的找位次数：%d 找位最大单位距离：%f",sTime,iJockeys,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,time,g_fSpawnDistanceMax1);
+			Debug_Print("%s:生成一只Jockey，当前Jockey数量：%d,特感总数量 %d, 找位最大单位距离：%f",sTime,iJockeys,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,g_fSpawnDistanceMax1);
 	}
 	else if (iType == 6)
 	{
-			Debug_Print("%s:生成一只Charger，当前Charger数量：%d,特感总数量 %d,刷特进行的找位次数：%d 找位最大单位距离：%f",sTime,iChargers,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,time,g_fSpawnDistanceMax1);
+			Debug_Print("%s:生成一只Charger，当前Charger数量：%d,特感总数量 %d, 找位最大单位距离：%f",sTime,iChargers,iSmokers+iBoomers+iHunters+iSpitters+iJockeys+iChargers,g_fSpawnDistanceMax1);
 	}
 
 }
@@ -1034,7 +1037,7 @@ int IsBotTypeNeeded()
 	{
 		if ((iSpitterLimit < GetConVarInt(FindConVar("z_spitter_limit"))))
 		{
-			if(g_hSpawnMax.IntValue>4)
+			if(g_iSpawnMaxCount>4)
 				IsBotTypeNeeded();
 			else 
 				{

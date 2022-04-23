@@ -115,44 +115,38 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 		}
 		if (iFlags == FL_JUMPING)
 		{
-				int NewTarget = NearestSurvivor(jockey);	float fTargetPos[3];
-				if (NewTarget > 0)
+			int NewTarget = NearestSurvivor(jockey);	float fTargetPos[3];
+			if (NewTarget > 0)
+			{
+				GetClientAbsOrigin(NewTarget, fTargetPos);
+				if (GetVectorDistance(fJockeyPos, fTargetPos) < 100.0)
 				{
-					GetClientAbsOrigin(NewTarget, fTargetPos);
-					if (GetVectorDistance(fJockeyPos, fTargetPos) < 100.0)
+					// 防止连跳过头
+					float fAnglesPost[3], fAngles[3];
+					GetVectorDistance(fSpeed, fAngles);
+					fAnglesPost = fAngles;
+					fAngles[0] = fAngles[2] = 0.0;
+					GetAngleVectors(fAngles, fAngles, NULL_VECTOR, NULL_VECTOR);
+					NormalizeVector(fAngles, fAngles);
+					// 保存当前位置
+					static float fDirection[2][3];
+					fDirection[0] = fJockeyPos;
+					fDirection[1] = fTargetPos;
+					fJockeyPos[2] = fTargetPos[2] = 0.0;
+					MakeVectorFromPoints(fJockeyPos, fTargetPos, fJockeyPos);
+					NormalizeVector(fJockeyPos, fJockeyPos);
+					// 计算距离
+					if (RadToDeg(ArcCosine(GetVectorDotProduct(fAngles, fJockeyPos))) < g_fJockeyAirAngles)
 					{
-						// 防止连跳过头
-						float fAnglesPost[3], fAngles[3];
-						GetVectorDistance(fSpeed, fAngles);
-						fAnglesPost = fAngles;
-						fAngles[0] = fAngles[2] = 0.0;
-						GetAngleVectors(fAngles, fAngles, NULL_VECTOR, NULL_VECTOR);
-						NormalizeVector(fAngles, fAngles);
-						// 保存当前位置
-						static float fDirection[2][3];
-						fDirection[0] = fJockeyPos;
-						fDirection[1] = fTargetPos;
-						fJockeyPos[2] = fTargetPos[2] = 0.0;
-						MakeVectorFromPoints(fJockeyPos, fTargetPos, fJockeyPos);
-						NormalizeVector(fJockeyPos, fJockeyPos);
-						// 计算距离
-						if (RadToDeg(ArcCosine(GetVectorDotProduct(fAngles, fJockeyPos))) < g_fJockeyAirAngles)
-						{
-							return Plugin_Continue;
-						}
-						// 重新设置速度方向
-						float fNewVelocity[3];
-						MakeVectorFromPoints(fDirection[0], fDirection[1], fNewVelocity);
-						TeleportEntity(jockey, NULL_VECTOR, fAnglesPost, fNewVelocity);
+						return Plugin_Continue;
 					}
+					// 重新设置速度方向
+					float fNewVelocity[3];
+					MakeVectorFromPoints(fDirection[0], fDirection[1], fNewVelocity);
+					TeleportEntity(jockey, NULL_VECTOR, fAnglesPost, fNewVelocity);
 				}
+			}
 		}
-		else
-		{
-			buttons &= ~IN_JUMP;
-			buttons &= ~IN_ATTACK;
-		}
-		return Plugin_Changed;
 	}
 	return Plugin_Continue;
 }
@@ -182,6 +176,7 @@ public Action evt_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 public Action Timer_LeapCoolDown(Handle timer, int jockey)
 {
 	g_bCanLeap[jockey] = true;
+	return Plugin_Continue;
 }
 
 public void evt_JockeyRide(Event event, const char[] name, bool dontBroadcast)
@@ -314,9 +309,7 @@ int NearestSurvivor(int attacker)
 	return iTarget;
 }
 
-
-
-float UpdatePosition(int jockey, int target, float fForce)
+float[] UpdatePosition(int jockey, int target, float fForce)
 {
 	float fBuffer[3], fTankPos[3], fTargetPos[3];
 	GetClientAbsOrigin(jockey, fTankPos);	GetClientAbsOrigin(target, fTargetPos);

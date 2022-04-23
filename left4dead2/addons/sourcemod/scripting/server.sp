@@ -89,8 +89,26 @@ public Action:ShowAnneServerIP(client, args)
     GetConVarString(hCvarIPUrl, url, sizeof(url));
 	ShowMOTDPanel(client, title, url, MOTDPANEL_TYPE_URL);
 }
+void checkbot(){
+	int count=0;
+	for (new i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i))
+		{
+			count++;
+		}
+	}
+	if(count==0)
+	{
+		while(count<=4){
+			ServerCommand("sb_add");
+			count++;
+		}	
+	}
+}
 public Action:AFKTurnClientToSurvivors(client, args)
 { 
+	checkbot();
 	if(!IsSuivivorTeamFull())
 	{
 		ClientCommand(client, "jointeam survivor");
@@ -383,21 +401,6 @@ BypassAndExecuteCommand(client, String: strCommand[], String: strParam1[])
 //判断生还是否已经满人
 bool:IsSuivivorTeamFull() 
 {
-	int count=0;
-	for (new i = 1; i <= MaxClients; i++)
-	{
-		if (IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && IsFakeClient(i))
-		{
-			count++;
-		}
-	}
-	if(count==0)
-	{
-		while(count<=4){
-			ServerCommand("sb_add");
-			count++;
-		}	
-	}
 	for (new i = 1; i <= MaxClients; i++)
 	{
 		if (IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && IsFakeClient(i))

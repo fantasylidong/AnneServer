@@ -14,7 +14,7 @@
 #define TEAM_INFECTED 3
 #define OBSTACLE_HEIGHT 18.0
 #define PLAYER_HEIGHT 72.0
-#define TANK_UNSTUCK_TRIES 80
+#define TANK_UNSTUCK_TRIES 100
 // CommandAbot
 #define PLUGIN_SCRIPTLOGIC "plugin_scripting_logic_entity"
 #define COMMANDABOT_MOVE "CommandABot({cmd = 1, pos = Vector(%f, %f, %f), bot = GetPlayerFromUserID(%i)})"
@@ -56,13 +56,13 @@ public Plugin myinfo =
 ConVar g_hTankBhop, g_hTankThrow, g_hTankThrowDist,g_hTankBlockThrowDist, g_hTankTarget, g_hTankBhopSpeed, g_hTreeDetect, g_hTreeNewTarget, g_hTankAirAngles, g_hTankAttackRange
 , g_hTankConsumeHeight, g_hTankConsumLimit, g_hTankConsumeRaidus, g_hTankAttackVomitedNum, g_hVomitCanInstantAttack, g_hVomitAttackInterval, g_hTeleportForwardPercent
 , g_hVsBossFlowBuffer, g_hTankConsumeLimitNum, g_hTankThrowForce, g_hTankConsume, g_hTankConsumeType, g_hTankRetreatAirAngles, g_hTankConsumeAction, g_hTankConsumeDamagePercent
-, g_hTankForceAttackDistance, g_hTankConsumeHealthLimit, g_hTankAttackIncapped, g_hTankConsumeValidRaidus, g_hTankConsumeDistance;
+, g_hTankForceAttackDistance, g_hTankConsumeHealthLimit, g_hTankAttackIncapped, g_hTankConsumeValidRaidus, g_hTankConsumeDistance, g_hSiLimit;
 // Ints
 int g_iTankTarget, g_iTankThrowDist, g_iTankBlockThrowDist, g_iTreeDetect, g_iTreePlayer[MAXPLAYERS + 1] = -1, g_iTreeNewTarget, g_iTankConsumeLimit
 , g_iTankConsumeRaidus, g_iTankAttackVomitedNum, g_iVomitedPlayer = 0, g_iTeleportForwardPercent, g_iTankConsumeSurvivorProgress[MAXPLAYERS + 1] = 0
 , g_iTankConsumeNum, g_iTankConsumeLimitNum[MAXPLAYERS + 1] = 0, g_iTankConsumeType, g_iTankConsumeAction, g_iTankConsumeDamagePercent, g_iTankForceAttackDistance, g_iTankConsumeHealthLimit, g_iTankAttackIncapped
 , g_iTankConsumeValidRaidus, g_iTankConsumeDistance, g_iTankIncappedCount[MAXPLAYERS + 1][1], g_iTankConsumeValidPos[MAXPLAYERS + 1][1], g_iTankSecondAttackDistance[MAXPLAYERS + 1][1]
-, g_iDistanceCount[MAXPLAYERS + 1][1], g_iTankUnstuckTimes[MAXPLAYERS + 1][2];
+, g_iDistanceCount[MAXPLAYERS + 1][1], g_iTankUnstuckTimes[MAXPLAYERS + 1][2], g_iSiLimit = 0;
 
 // Bools
 bool g_bTankBhop, g_bTankThrow, g_bCanTankConsume[MAXPLAYERS + 1] = false, g_bInConsumePlace[MAXPLAYERS + 1] = false, g_bReturnConsumePlace[MAXPLAYERS + 1] = false, g_bCanTankAttack[MAXPLAYERS + 1] = true
@@ -93,15 +93,15 @@ public void OnPluginStart()
 	g_hTankBhopSpeed = CreateConVar("ai_Tank_BhopSpeed", "60.0", "Tank连跳的速度", FCVAR_NOTIFY, true, 0.0);
 	g_hTankBhop = CreateConVar("ai_Tank_Bhop", "1", "是否开启Tank连跳功能：0=关闭，1=开启", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTankThrow = CreateConVar("ai_Tank_Throw", "1", "是否允许Tank投掷石块：0=关闭，1=开启", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	g_hTankThrowDist = CreateConVar("ai_TankThrowDistance", "400", "Tank距离目标多近允许投掷石块", FCVAR_NOTIFY, true, 0.0);
-	g_hTankBlockThrowDist = CreateConVar("ai_TankBlockThrowDistance", "200", "Tank距离目标多近时阻止投掷石块", FCVAR_NOTIFY, true, 0.0);
+	g_hTankThrowDist = CreateConVar("ai_TankThrowDistance", "450", "Tank距离目标多近允许投掷石块", FCVAR_NOTIFY, true, 0.0);
+	g_hTankBlockThrowDist = CreateConVar("ai_TankBlockThrowDistance", "150", "Tank距离目标多近时阻止投掷石块", FCVAR_NOTIFY, true, 0.0);
 	g_hTankTarget = CreateConVar("ai_TankTarget", "1", "Tank目标选择：1=最近，2=血量最少，3=血量最多", FCVAR_NOTIFY, true, 1.0, true, 3.0);
 	g_hTreeDetect = CreateConVar("ai_TankTreeDetect", "1", "生还者与Tank进行秦王绕柱时进行的操作：0=关闭此项，1=切换目标，2=将Tank传送至绕树的生还者后", FCVAR_NOTIFY, true, 0.0, true, 2.0);
 	g_hTreeNewTarget = CreateConVar("ai_TankTreeNewTargetDistance", "300", "Tank记录绕树生还者并选择新目标后，距离新目标多近重置绕树目标记录", FCVAR_NOTIFY, true, 0.0);
 	g_hTankAirAngles = CreateConVar("ai_TankAirAngles", "60.0", "Tank在空中的速度向量与到生还者的方向向量夹角大于这个值停止连跳", FCVAR_NOTIFY, true, 0.0, true, 90.0);
 	g_hTankConsume = CreateConVar("ai_TankConsume", "0", "是否开启Tank消耗功能", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTankConsumeHeight = CreateConVar("ai_TankConsumeHeight", "100", "Tank进行消耗时将会优先选择高于这个高度的位置，如无则随机选位", FCVAR_NOTIFY, true, 0.0);
-	g_hTankConsumLimit = CreateConVar("ai_TankConsumeLimit", "2", "感染者团队少于多少特感时，Tank会进行消耗", FCVAR_NOTIFY, true, 0.0);
+	g_hTankConsumLimit = CreateConVar("ai_TankConsumeLimit", "0", "感染者团队少于等于当前刷特数量 - 这个值的特感时", FCVAR_NOTIFY, true, 0.0);
 	g_hTankConsumeRaidus = CreateConVar("ai_TankConsumeRaidus", "80.0", "Tank消耗位置的范围，从中心坐标以这个半径画圆", FCVAR_NOTIFY, true, 0.0);
 	g_hTankAttackVomitedNum = CreateConVar("ai_TankAttackVomitedNum", "1", "如果有这个数量的生还者被Boomer喷吐到，正在进行消耗的Tank将会攻击", FCVAR_NOTIFY, true, 0.0);
 	g_hVomitCanInstantAttack = CreateConVar("ai_TankVomitCanInstantAttack", "1", "是否开启固定数量生还者被喷吐后Tank立刻攻击", FCVAR_NOTIFY, true, 0.0, true, 1.0);
@@ -113,21 +113,23 @@ public void OnPluginStart()
 	g_hTankConsumeAction = CreateConVar("ai_TankConsumeAction", "2", "Tank在消耗范围内将会：1=冰冻，2=可活动但不允许超出消耗范围", FCVAR_NOTIFY, true, 1.0, true, 2.0);
 	g_hTankConsumeDamagePercent = CreateConVar("ai_TankConsumeDamagePercent", "50", "Tank在消耗过程中只会受到这个百分比的伤害", FCVAR_NOTIFY, true, 0.0, true, 100.0);
 	// 2022-4-7新增
-	g_hTankForceAttackDistance = CreateConVar("ai_TankForceAttackDistance", "650", "Tank在离最近生还这个距离时即使可以消耗也不会当着生还的面回避生还（强制压制）", FCVAR_NOTIFY, true, 0.0);
+	g_hTankForceAttackDistance = CreateConVar("ai_TankForceAttackDistance", "300", "Tank在离最近生还这个距离时即使可以消耗也不会当着生还的面回避生还（强制压制）", FCVAR_NOTIFY, true, 0.0);
 	g_hTankAttackIncapped = CreateConVar("ai_TankIncappedCount", "1", "强制压制时，需要拍倒这个数量的生还者才允许继续检测是否可以消耗", FCVAR_NOTIFY, true, 0.0);
-	g_hTankConsumeHealthLimit = CreateConVar("ai_TankConsumeHealthLimit", "2500", "Tank在少于这么多血量时不会消耗", FCVAR_NOTIFY, true, 0.0);
+	g_hTankConsumeHealthLimit = CreateConVar("ai_TankConsumeHealthLimit", "1200", "Tank在少于这么多血量时不会消耗", FCVAR_NOTIFY, true, 0.0);
 	g_hTankConsumeValidRaidus = CreateConVar("ai_TankConsumeValidRaidus", "1800", "Tank在当前消耗位上，如果当前消耗位不能直视生还，则以这个半径重新找位", FCVAR_NOTIFY, true, 0.0);
 	g_hTankConsumeDistance = CreateConVar("ai_TankConsumeDistance", "1200", "Tank消耗找位的位置必须离生还者大于这个距离", FCVAR_NOTIFY, true, 0.0);
 	// 其他 Cvar
 	g_hTankAttackRange = FindConVar("tank_attack_range");
 	g_hVsBossFlowBuffer = FindConVar("versus_boss_buffer");
 	g_hTankThrowForce = FindConVar("z_tank_throw_force");
+	g_hSiLimit = FindConVar("l4d_infected_limit");
 	// HookEvents
 	HookEvent("player_spawn", evt_PlayerSpawn);
 	HookEvent("player_death", evt_PlayerDeath);
 	HookEvent("player_now_it", evt_PlayerNowIt);
 	HookEvent("player_incapacitated", evt_PlayerIncapped);
 	// AddChangeHook
+	g_hSiLimit.AddChangeHook(ConVarChanged_Cvars);
 	g_hTankBhop.AddChangeHook(ConVarChanged_Cvars);
 	g_hTankThrow.AddChangeHook(ConVarChanged_Cvars);
 	g_hTankThrowDist.AddChangeHook(ConVarChanged_Cvars);
@@ -250,6 +252,7 @@ void GetCvars()
 	g_iTankAttackIncapped = g_hTankAttackIncapped.IntValue;
 	g_iTankConsumeValidRaidus = g_hTankConsumeValidRaidus.IntValue;
 	g_iTankConsumeDistance = g_hTankConsumeDistance.IntValue;
+	g_iSiLimit = g_hSiLimit.IntValue;
 }
 
 // **************
@@ -686,7 +689,7 @@ void TankActionReset(int client)
 void CheckCanTankConsume(int tank, int survivordist, int iInfectedCount)
 {
 	float fTankPos[3] = {0.0};	GetClientAbsOrigin(tank, fTankPos);
-	if (iInfectedCount < g_iTankConsumeLimit)
+	if (iInfectedCount <= g_iSiLimit - g_iTankConsumeLimit)
 	{
 		// 一定数量生还者被喷后，重新设置状态
 		if (g_iVomitedPlayer >= g_iTankAttackVomitedNum && g_bVomitCanInstantAttack)
@@ -779,7 +782,7 @@ void CheckCanTankConsume(int tank, int survivordist, int iInfectedCount)
 	{
 		if (g_bTankActionReset[tank])
 		{
-			//PrintToConsoleAll("[Ai-Tank]：当前特感数量：%d，多于消耗限制数量：%d，强制压制", iInfectedCount, g_iTankConsumeLimit);
+			//PrintToConsoleAll("[Ai-Tank]：当前特感数量：%d，多于消耗限制数量：%d，强制压制", iInfectedCount, g_iSiLimit - g_iTankConsumeLimit);
 			TankActionReset(tank);
 			g_bTankActionReset[tank] = false;
 		}
@@ -1106,9 +1109,9 @@ public void evt_PlayerIncapped(Event event, const char[] name, bool dontBroadcas
 		g_iTankIncappedCount[attacker][0] += 1;
 		//PrintToConsoleAll("[Ai-Tank]：倒地：%N，攻击者：%N，目前：%d", victim, attacker, g_iTankIncappedCount[attacker][0]);
 		g_iTankSecondAttackDistance[attacker][0] /= 2;
-		if (g_iTankSecondAttackDistance[attacker][0] < 300)
+		if (g_iTankSecondAttackDistance[attacker][0] < 150)
 		{
-			g_iTankSecondAttackDistance[attacker][0] = 300;
+			g_iTankSecondAttackDistance[attacker][0] = 150;
 		}
 	}
 }

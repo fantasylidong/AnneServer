@@ -24,7 +24,7 @@ public Plugin myinfo =
 	name 			= "Direct InfectedSpawn",
 	author 			= "Caibiii, 夜羽真白，东",
 	description 	= "特感刷新控制，传送落后特感",
-	version 		= "2022.04.9",
+	version 		= "2022.04.24",
 	url 			= "https://github.com/Caibiii/AnneServer"
 }
 

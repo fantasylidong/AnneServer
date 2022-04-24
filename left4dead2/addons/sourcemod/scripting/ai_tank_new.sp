@@ -46,9 +46,9 @@ enum AimType
 public Plugin myinfo =
 {
 	name 			= "Ai_Tank_Enhance",
-	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白",
+	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白,东",
 	description 	= "觉得Ai克太弱了？ Try this！",
-	version 		= "2022-4-17",
+	version 		= "2022-4-24",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
@@ -94,7 +94,7 @@ public void OnPluginStart()
 	g_hTankBhop = CreateConVar("ai_Tank_Bhop", "1", "是否开启Tank连跳功能：0=关闭，1=开启", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTankThrow = CreateConVar("ai_Tank_Throw", "1", "是否允许Tank投掷石块：0=关闭，1=开启", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hTankThrowDist = CreateConVar("ai_TankThrowDistance", "450", "Tank距离目标多近允许投掷石块", FCVAR_NOTIFY, true, 0.0);
-	g_hTankBlockThrowDist = CreateConVar("ai_TankBlockThrowDistance", "150", "Tank距离目标多近时阻止投掷石块", FCVAR_NOTIFY, true, 0.0);
+	g_hTankBlockThrowDist = CreateConVar("ai_TankBlockThrowDistance", "200", "Tank距离目标多近时阻止投掷石块", FCVAR_NOTIFY, true, 0.0);
 	g_hTankTarget = CreateConVar("ai_TankTarget", "1", "Tank目标选择：1=最近，2=血量最少，3=血量最多", FCVAR_NOTIFY, true, 1.0, true, 3.0);
 	g_hTreeDetect = CreateConVar("ai_TankTreeDetect", "1", "生还者与Tank进行秦王绕柱时进行的操作：0=关闭此项，1=切换目标，2=将Tank传送至绕树的生还者后", FCVAR_NOTIFY, true, 0.0, true, 2.0);
 	g_hTreeNewTarget = CreateConVar("ai_TankTreeNewTargetDistance", "300", "Tank记录绕树生还者并选择新目标后，距离新目标多近重置绕树目标记录", FCVAR_NOTIFY, true, 0.0);
@@ -335,7 +335,7 @@ public Action OnPlayerRunCmd(int tank, int &buttons, int &impulse, float vel[3],
 				float fBuffer[3] = {0.0}, fTargetPos[3] = {0.0};
 				GetClientAbsOrigin(iTarget, fTargetPos);
 				fBuffer = UpdatePosition(tank, iTarget, g_fTankBhopSpeed);
-				if (g_fTankAttackRange+50 < iSurvivorDistance < 2000 && fCurrentSpeed > 190.0)
+				if (g_fTankAttackRange+65 < iSurvivorDistance < 2000 && fCurrentSpeed > 190.0)
 				{
 					if (iFlags & FL_ONGROUND)
 					{

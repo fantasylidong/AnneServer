@@ -8,8 +8,9 @@
 #define TEAM_SURVIVOR 2
 #define TEAM_INFECTED 3
 #define CVAR_FLAGS		FCVAR_NOTIFY
+#include <l4d2_saferoom_detect>
 
-#define PLUGIN_VERSION "1.5"
+#define PLUGIN_VERSION "1.7"
 ConVar 	g_hCvarEnable;
 ConVar 	g_hCvarStuckInterval;
 ConVar 	g_hCvarNonStuckRadius;
@@ -32,6 +33,9 @@ int 	g_iRushTimes[MAXPLAYERS+1];
 int		g_iTanksCount;
 /*
 	ChangeLog:
+	1.7
+		生还者进度超过98%的也不会传送（防止传送到安全门内）这种情况改为用l4d2_saferoom_detect解决
+	
 	1.6
 		去除tank在梯子上不能传送的限制（极少数情况tank在梯子上卡住了）
 		
@@ -67,10 +71,10 @@ public void OnPluginStart()
 {
 	CreateConVar(							"l4d2_Anne_stuck_tank_teleport",				PLUGIN_VERSION,	"Plugin version", FCVAR_DONTRECORD );
 	g_hCvarEnable = CreateConVar(			"l4d2_Anne_stuck_tank_teleport_enable",					"1",		"Enable plugin (1 - On / 0 - Off)", CVAR_FLAGS );	
-	g_hCvarStuckInterval = CreateConVar(	"l4d2_Anne_stuck_tank_teleport_check_interval",			"3",		"Time intervals (in sec.) tank stuck should be checked", CVAR_FLAGS );
+	g_hCvarStuckInterval = CreateConVar(	"l4d2_Anne_stuck_tank_teleport_check_interval",			"1",		"Time intervals (in sec.) tank stuck should be checked", CVAR_FLAGS );
 	g_hCvarNonStuckRadius = CreateConVar(	"l4d2_Anne_stuck_tank_teleport_non_stuck_radius",		"15",		"Maximum radius where tank is cosidered non-stucked when not moved during X (9) sec. (see l4d2_Anne_stuck_tank_teleport_check_interval ConVar)", CVAR_FLAGS );
 	g_hCvarRusherPunish = CreateConVar(		"l4d2_Anne_stuck_tank_teleport_rusher_punish",			"1",		"Punish the player who rush too far from the nearest tank by teleporting tank to him? (0 - No / 1 - Yes)", CVAR_FLAGS );
-	g_hCvarRusherDist = CreateConVar(		"l4d2_Anne_stuck_tank_teleport_rusher_dist",			"3000",		"Maximum distance to the nearest tank considered as rusher", CVAR_FLAGS );
+	g_hCvarRusherDist = CreateConVar(		"l4d2_Anne_stuck_tank_teleport_rusher_dist",			"2500",		"Maximum distance to the nearest tank considered as rusher", CVAR_FLAGS );
 	g_hCvarRusherCheckTimes = CreateConVar(	"l4d2_Anne_stuck_tank_teleport_rusher_check_times",		"3",		"Number of checks before finally considering player as rusher", CVAR_FLAGS );
 	g_hCvarRusherCheckInterv = CreateConVar("l4d2_Anne_stuck_tank_teleport_rusher_check_interval",	"5",		"Interval (in sec.) between each check for rusher", CVAR_FLAGS );	
 	g_hCvarRusherMinPlayers = CreateConVar(	"l4d_TankAntiStuck_rusher_minplayers",		"2",		"Minimum living players allowed for 'Rusher player' rule to work", CVAR_FLAGS );
@@ -433,8 +437,8 @@ public Action Timer_CheckRusher(Handle timer) {
 					//增加限制条件，tank的路程图不能在生还者前面，否则会碰到刷tank后生还者距离过远，直接传送到生还者附近
 					if (distance > g_hCvarRusherDist.FloatValue) {
 						
-						if (g_iRushTimes[i] >= g_hCvarRusherCheckTimes.IntValue && L4D2Direct_GetFlowDistance(tank)<L4D2Direct_GetFlowDistance(i) && !L4D_IsMissionFinalMap() && GetPlayerflowPercent(i)<98.0) {
-							PrintToConsoleAll("tank与\x03%N的距离为：%f，坦克的路程为:%f，生还者的路程为:%f,生还者进度为：%f",distance,L4D2Direct_GetFlowDistance(tank),L4D2Direct_GetFlowDistance(i),GetPlayerflowPercent(i));
+						if (g_iRushTimes[i] >= g_hCvarRusherCheckTimes.IntValue && L4D2Direct_GetFlowDistance(tank)<L4D2Direct_GetFlowDistance(i) && !L4D_IsMissionFinalMap() && !SAFEDETECT_IsEntityInEndSaferoom(i)) {
+							PrintToConsoleAll("tank与\x03%N的距离为：%f，坦克的路程为:%f，生还者的路程为:%f",distance,L4D2Direct_GetFlowDistance(tank),L4D2Direct_GetFlowDistance(i));
 							TeleportToSurvivorInPlace(tank, i);
 							PrintToChatAll("\x03%N \x04 因为当求生跑男，Tank开始传送惩罚.", i);
 														
@@ -453,9 +457,7 @@ public Action Timer_CheckRusher(Handle timer) {
 	}
 	return Plugin_Continue;
 }
-float GetPlayerflowPercent(int client){
-	return (L4D2Direct_GetFlowDistance(client)/L4D2Direct_GetMapMaxFlowDistance())*100.0;
-}
+
 /*
 float GetFurthestUncappedSurvivorFlow(){
 	float HighestFlow=0.0;
@@ -543,7 +545,7 @@ public Action Timer_CheckPos(Handle timer, int UserId)
 		//PrintToConsoleAll("tank目前位置和前位置相差:%f",distance);
 		if (distance < g_hCvarNonStuckRadius.FloatValue && !IsIncappedNearBy(pos) && !IsTankAttacking(tank)) {
 			
-			if ( g_iStuckTimes[tank] > 2) {
+			if ( g_iStuckTimes[tank] > 5) {
 				TeleportTank(tank);
 			}
 			g_iStuckTimes[tank]++;

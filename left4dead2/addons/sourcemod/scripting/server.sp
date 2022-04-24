@@ -12,6 +12,14 @@
 #define L4D_MAXHUMANS_LOBBY_OTHER 3
 #define IsValidClient(%1)		(1 <= %1 <= MaxClients && IsClientInGame(%1))
 #define IsValidAliveClient(%1)	(1 <= %1 <= MaxClients && IsClientInGame(%1) && IsPlayerAlive(%1))
+public Plugin myinfo = 
+{
+	name 			= "AnneServer Server Function",
+	author 			= "def075, Caibiii，东",
+	description 	= "Advanced Special Infected AI",
+	version 		= "2022.04.24",
+	url 			= "https://github.com/Caibiii/AnneServer"
+}
 new Float:lastDisconnectTime;
 new Handle:hCvarMotdTitle;
 new ConVar:g_ConVarUnloadExtNum;

@@ -70,10 +70,10 @@ bool g_bAiEnable[MAXPLAYERS + 1], g_bTankDelay[MAXPLAYERS + 1] = false;
 public Plugin myinfo = 
 {
 	name 			= "Advance Special Infected AI",
-	author 			= "def075, Caibiii, 夜羽真白",
+	author 			= "def075, Caibiii, 夜羽真白，东",
 	description 	= "Advanced Special Infected AI",
-	version 		= "2022.04.17",
-	url 			= "https://github.com/GlowingTree880/L4D2_LittlePlugins"
+	version 		= "2022.04.24",
+	url 			= "https://github.com/Caibiii/AnneServer"
 }
 
 public void OnPluginStart()

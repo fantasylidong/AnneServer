@@ -16,9 +16,9 @@ enum AimType
 public Plugin myinfo = 
 {
 	name 			= "Ai-Boomer增强",
-	author 			= "夜羽真白",
+	author 			= "夜羽真白，东",
 	description 	= "觉得Ai-Boomer不够强， Try this！",
-	version 		= "1.0.1.0",
+	version 		= "22-4-24",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 

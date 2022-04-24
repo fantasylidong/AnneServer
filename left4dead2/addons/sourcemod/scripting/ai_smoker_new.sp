@@ -23,9 +23,9 @@ enum AimType
 public Plugin myinfo = 
 {
 	name 			= "Ai_Smoker增强",
-	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白",
+	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白，东",
 	description 	= "觉得Ai舌头太弱了？ Try this！",
-	version 		= "22-4-17",
+	version 		= "22-4-24",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 

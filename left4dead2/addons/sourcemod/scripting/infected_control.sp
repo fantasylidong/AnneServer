@@ -292,17 +292,19 @@ public void OnGameFrame()
 							if (iZombieClass > 0&&g_iSpawnMaxCount > 0)
 							{
 								int entityindex = L4D2_SpawnSpecial(iZombieClass, fSpawnPos, view_as<float>({0.0, 0.0, 0.0}));
-								if (SAFEDETECT_IsEntityInEndSaferoom(entityindex))
-								{
-									ForcePlayerSuicide(entityindex);
-									//PrintToConsoleAll("[Infected-Spawn]：阳间模式：特感：%s，位置：%.2f，%.2f，%.2f，刷新在终点安全屋内，强制处死", classname, fSpawnPos[0], fSpawnPos[1], fSpawnPos[2]);
-									return;
-								}
 								if (IsValidEntity(entityindex) && IsValidEdict(entityindex))
 								{
 									g_iSpawnMaxCount -= 1;
 									addlimit(iZombieClass);
 									print_type(iZombieClass,g_fSpawnDistanceMax);
+								}
+								if (SAFEDETECT_IsEntityInEndSaferoom(entityindex))
+								{									
+									//PrintToConsoleAll("[Infected-Spawn]：阳间模式：特感：%N，位置：%.2f，%.2f，%.2f，刷新在终点安全屋内，强制处死", entityindex, fSpawnPos[0], fSpawnPos[1], fSpawnPos[2]);
+									g_iSpawnMaxCount += 1;
+									dellimit(iZombieClass);
+									ForcePlayerSuicide(entityindex);
+									return;
 								}
 							}
 						}
@@ -447,6 +449,36 @@ public void addlimit(int iZombieClass){
 		case 6:
 		{
 			iChargerLimit++;
+		}
+	}
+}
+
+public void dellimit(int iZombieClass){
+	switch (iZombieClass)
+	{
+		case 1:
+		{
+			iSmokerLimit--;
+		}
+		case 2:
+		{
+			iBoomerLimit--;
+		}
+		case 3:
+		{
+			iHunterLimit--;
+		}
+		case 4:
+		{
+			iSpitterLimit--;
+		}
+		case 5:
+		{
+			iJockeyLimit--;
+		}
+		case 6:
+		{
+			iChargerLimit--;
 		}
 	}
 }

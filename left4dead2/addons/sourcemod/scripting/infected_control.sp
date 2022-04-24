@@ -292,8 +292,7 @@ public void OnGameFrame()
 							if (iZombieClass > 0&&g_iSpawnMaxCount > 0)
 							{
 								int entityindex = L4D2_SpawnSpecial(iZombieClass, fSpawnPos, view_as<float>({0.0, 0.0, 0.0}));
-								int boss_proximity = RoundToNearest(GetBossProximity() * 100.0);
-								if (SAFEDETECT_IsEntityInEndSaferoom(entityindex) && boss_proximity>30)
+								if (SAFEDETECT_IsEntityInEndSaferoom(entityindex))
 								{
 									ForcePlayerSuicide(entityindex);
 									//PrintToConsoleAll("[Infected-Spawn]：阳间模式：特感：%s，位置：%.2f，%.2f，%.2f，刷新在终点安全屋内，强制处死", classname, fSpawnPos[0], fSpawnPos[1], fSpawnPos[2]);
@@ -313,30 +312,7 @@ public void OnGameFrame()
 		}
 	//}
 }
-float GetBossProximity()
-{
-	float proximity = GetMaxSurvivorCompletion() + FindConVar("versus_boss_buffer").FloatValue / L4D2Direct_GetMapMaxFlowDistance();
 
-	return (proximity > 1.0) ? 1.0 : proximity;
-}
-
-float GetMaxSurvivorCompletion()
-{
-	float flow = 0.0, tmp_flow = 0.0, origin[3];
-	Address pNavArea;
-	for (int i = 1; i <= MaxClients; i++) {
-		if (IsClientInGame(i) && GetClientTeam(i) == 2) {
-			GetClientAbsOrigin(i, origin);
-			pNavArea = L4D2Direct_GetTerrorNavArea(origin);
-			if (pNavArea != Address_Null) {
-				tmp_flow = L4D2Direct_GetTerrorNavAreaFlow(pNavArea);
-				flow = (flow > tmp_flow) ? flow : tmp_flow;
-			}
-		}
-	}
-
-	return (flow / L4D2Direct_GetMapMaxFlowDistance());
-}
 public void ResetInfectedNumber(){
 	int iBoomers = 0, iSmokers = 0, iHunters = 0, iSpitters = 0, iJockeys = 0, iChargers = 0;
 	for (int infected = 0; infected < MaxClients; infected++)

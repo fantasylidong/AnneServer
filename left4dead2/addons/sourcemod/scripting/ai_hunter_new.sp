@@ -164,7 +164,7 @@ public Action L4D2_OnChooseVictim(int specialInfected, int &curTarget)
 			float fTargetPos[3], fDistance;
 			GetClientAbsOrigin(curTarget, fTargetPos);
 			fDistance = GetVectorDistance(fSelfPos, fTargetPos);
-			if (IsPinned(curTarget) || IsIncapped(curTarget))
+			if (IsPinned(curTarget) || !IsIncapped(curTarget))
 			{
 				curTarget = GetClosestSurvivor(fSelfPos, curTarget);
 				return Plugin_Changed;
@@ -499,7 +499,7 @@ int GetClosestSurvivor(float refpos[3], int excludeSur = -1)
 	int iClosetAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));
 	for (int client = 1; client < MaxClients; client++)
 	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && !IsIncapped(client) && client != excludeSur)
+		if (IsSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client) && !IsIncapped(client) && client != excludeSur)
 		{
 			GetClientAbsOrigin(client, surPos);
 			int iAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));

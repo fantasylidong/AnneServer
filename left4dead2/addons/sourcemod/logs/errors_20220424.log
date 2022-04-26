@@ -1,0 +1,38 @@
+L 04/24/2022 - 01:21:22: SourceMod error session started
+L 04/24/2022 - 01:21:22: Info (map "c5m1_waterfront") (file "/root/l4d2/left4dead2/addons/sourcemod/logs/errors_20220424.log")
+L 04/24/2022 - 01:21:22: [SM] Exception reported: Failed to create native "LGO_IsMatchModeLoaded", name is probably already in use
+L 04/24/2022 - 01:21:22: [SM] Blaming: AnneHappy.smx
+L 04/24/2022 - 01:21:22: [SM] Call stack trace:
+L 04/24/2022 - 01:21:22: [SM]   [0] CreateNative
+L 04/24/2022 - 01:21:22: [SM]   [1] Line 61, modules/ReqMatch.sp::RM_APL
+L 04/24/2022 - 01:21:22: [SM]   [2] Line 68, D:\Users\Hasee\Documents\Tencent Files\571720780\FileRecv\MobileFile\1.10ƽ̨\confoglcompmod.sp::AskPluginLoad2
+L 04/24/2022 - 01:21:22: [SM] Failed to load plugin "AnneHappy.smx": unexpected error 23 in AskPluginLoad callback.
+L 04/24/2022 - 01:21:28: Error log file session closed.
+L 04/24/2022 - 04:08:08: SourceMod error session started
+L 04/24/2022 - 04:08:08: Info (map "c5m1_waterfront") (file "/root/l4d2/left4dead2/addons/sourcemod/logs/errors_20220424.log")
+L 04/24/2022 - 04:08:08: [SM] Exception reported: Failed to create native "LGO_IsMatchModeLoaded", name is probably already in use
+L 04/24/2022 - 04:08:08: [SM] Blaming: AnneHappy.smx
+L 04/24/2022 - 04:08:08: [SM] Call stack trace:
+L 04/24/2022 - 04:08:08: [SM]   [0] CreateNative
+L 04/24/2022 - 04:08:08: [SM]   [1] Line 61, modules/ReqMatch.sp::RM_APL
+L 04/24/2022 - 04:08:08: [SM]   [2] Line 68, D:\Users\Hasee\Documents\Tencent Files\571720780\FileRecv\MobileFile\1.10ƽ̨\confoglcompmod.sp::AskPluginLoad2
+L 04/24/2022 - 04:08:08: [SM] Failed to load plugin "AnneHappy.smx": unexpected error 23 in AskPluginLoad callback.
+L 04/24/2022 - 04:08:13: Error log file session closed.
+L 04/24/2022 - 04:08:21: SourceMod error session started
+L 04/24/2022 - 04:08:21: Info (map "c5m1_waterfront") (file "/root/l4d2/left4dead2/addons/sourcemod/logs/errors_20220424.log")
+L 04/24/2022 - 04:08:21: [SM] Exception reported: Failed to create native "LGO_IsMatchModeLoaded", name is probably already in use
+L 04/24/2022 - 04:08:21: [SM] Blaming: AnneHappy.smx
+L 04/24/2022 - 04:08:21: [SM] Call stack trace:
+L 04/24/2022 - 04:08:21: [SM]   [0] CreateNative
+L 04/24/2022 - 04:08:21: [SM]   [1] Line 61, modules/ReqMatch.sp::RM_APL
+L 04/24/2022 - 04:08:21: [SM]   [2] Line 68, D:\Users\Hasee\Documents\Tencent Files\571720780\FileRecv\MobileFile\1.10ƽ̨\confoglcompmod.sp::AskPluginLoad2
+L 04/24/2022 - 04:08:21: [SM] Failed to load plugin "AnneHappy.smx": unexpected error 23 in AskPluginLoad callback.
+L 04/24/2022 - 04:08:26: Error log file session closed.
+L 04/24/2022 - 04:44:28: SourceMod error session started
+L 04/24/2022 - 04:44:28: Info (map "c5m2_park") (file "/root/l4d2/left4dead2/addons/sourcemod/logs/errors_20220424.log")
+L 04/24/2022 - 04:44:28: [SM] Exception reported: Client 3 is not in game
+L 04/24/2022 - 04:44:28: [SM] Blaming: optional/AnneHappy/kill_tank.smx
+L 04/24/2022 - 04:44:28: [SM] Call stack trace:
+L 04/24/2022 - 04:44:28: [SM]   [0] ForcePlayerSuicide
+L 04/24/2022 - 04:44:28: [SM]   [1] Line 16, E:\BaiduNetdiskDownload\2021-09-21\l4d2_sound_manipulation.sp::Timer_KillTank
+L 04/24/2022 - 04:54:16: Error log file session closed.

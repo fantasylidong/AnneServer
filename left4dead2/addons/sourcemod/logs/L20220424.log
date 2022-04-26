@@ -1,0 +1,48 @@
+L 04/24/2022 - 01:15:51: SourceMod log file session started (file "/root/l4d2/left4dead2/addons/sourcemod/logs/L20220424.log") (Version "1.11.0.6826")
+L 04/24/2022 - 01:15:51: [optional/AnneHappy/servercleanup.smx] Deleted file "addons/sourcemod/logs/L20220422.log"
+L 04/24/2022 - 01:15:51: [optional/AnneHappy/servercleanup.smx] Deleted file "addons/sourcemod/logs/errors_20220423.log"
+L 04/24/2022 - 01:15:52: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 01:17:54: [optional/AnneHappy/l4d2_skill_detect.smx] Charge carry start: 7 - 4 -- time: 124.77
+L 04/24/2022 - 01:17:57: [optional/AnneHappy/l4d2_skill_detect.smx] Checking charge victim: 7 - 4 - flags: 1 (alive? 1)
+L 04/24/2022 - 01:18:05: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 1 freed 4 from 9: time: 2.66 / -1.00 -- class: jockey (with shove? 0)
+L 04/24/2022 - 01:18:06: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 3 freed 4 from 10: time: 0.08 / -1.00 -- class: hunter (with shove? 0)
+L 04/24/2022 - 01:18:08: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 1 freed 5 from 6: time: 3.66 / -1.00 -- class: jockey (with shove? 0)
+L 04/24/2022 - 01:18:19: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 1 freed 3 from 2: time: 0.84 / -1.00 -- class: jockey (with shove? 0)
+L 04/24/2022 - 01:18:23: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 1 freed 3 from 10: time: 1.27 / -1.00 -- class: hunter (with shove? 0)
+L 04/24/2022 - 01:18:43: [optional/AnneHappy/l4d2_skill_detect.smx] Charge carry start: 2 - 5 -- time: 173.03
+L 04/24/2022 - 01:18:44: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 1 freed 4 from 10: time: 1.22 / -1.00 -- class: hunter (with shove? 0)
+L 04/24/2022 - 01:18:45: [optional/AnneHappy/l4d2_skill_detect.smx] Checking charge victim: 2 - 3 - flags: 0 (alive? 1)
+L 04/24/2022 - 01:18:47: [optional/AnneHappy/l4d2_skill_detect.smx] Checking charge victim: 2 - 5 - flags: 1 (alive? 1)
+L 04/24/2022 - 01:18:55: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 4 freed 1 from 9: time: 10.40 / -1.00 -- class: hunter (with shove? 1)
+L 04/24/2022 - 01:18:59: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 1 freed 3 from 7: time: 12.77 / 13.52 -- class: smoker (with shove? 0)
+L 04/24/2022 - 01:19:05: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 3 freed 5 from 2: time: 19.50 / 22.00 -- class: charger (with shove? 0)
+L 04/24/2022 - 01:19:20: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 1 freed 2 from 6: time: 8.36 / -1.00 -- class: jockey (with shove? 0)
+L 04/24/2022 - 01:19:34: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 01:19:54: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 3 freed 1 from 10: time: 1.13 / -1.00 -- class: hunter (with shove? 1)
+L 04/24/2022 - 01:20:00: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 5 freed 1 from 8: time: -1.00 / 1.30 -- class: smoker (with shove? 1)
+L 04/24/2022 - 01:20:44: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 5 freed 2 from 4: time: 1.54 / -1.00 -- class: hunter (with shove? 1)
+L 04/24/2022 - 01:20:57: [optional/AnneHappy/l4d2_skill_detect.smx] Clear: 3 freed 5 from 6: time: 11.64 / -1.00 -- class: hunter (with shove? 0)
+L 04/24/2022 - 01:20:58: [optional/AnneHappy/l4d2_skill_detect.smx] Charge carry start: 10 - 3 -- time: 308.72
+L 04/24/2022 - 01:21:01: [optional/AnneHappy/l4d2_skill_detect.smx] Checking charge victim: 10 - 3 - flags: 1 (alive? 1)
+L 04/24/2022 - 01:21:28: SourceMod log file session started (file "/root/l4d2/left4dead2/addons/sourcemod/logs/L20220424.log") (Version "1.11.0.6826")
+L 04/24/2022 - 01:21:28: -------- Mapchange to c5m1_waterfront --------
+L 04/24/2022 - 01:21:30: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:08:13: SourceMod log file session started (file "/root/l4d2/left4dead2/addons/sourcemod/logs/L20220424.log") (Version "1.11.0.6826")
+L 04/24/2022 - 04:08:13: -------- Mapchange to c5m1_waterfront --------
+L 04/24/2022 - 04:08:15: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:08:26: SourceMod log file session started (file "/root/l4d2/left4dead2/addons/sourcemod/logs/L20220424.log") (Version "1.11.0.6826")
+L 04/24/2022 - 04:08:26: -------- Mapchange to c5m1_waterfront --------
+L 04/24/2022 - 04:08:27: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:40:06: -------- Mapchange to c5m1_waterfront --------
+L 04/24/2022 - 04:40:08: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:40:37: -------- Mapchange to c5m1_waterfront --------
+L 04/24/2022 - 04:40:39: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:41:56: [optional/AnneHappy/l4d2_skill_detect.smx] Witch Crown Check: crown shot: 975, harrassed: 0 (full health: 1000 / drawthresh: 500 / oneshot 1)
+L 04/24/2022 - 04:42:32: [optional/AnneHappy/l4d2_skill_detect.smx] calarm trigger: caller 481 / activator 481 / delay: 0.00
+L 04/24/2022 - 04:42:48: -------- Mapchange to c5m2_park --------
+L 04/24/2022 - 04:42:51: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:47:19: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:49:27: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).
+L 04/24/2022 - 04:53:36: [optional/AnneHappy/l4d2_skill_detect.smx] Witch Crown Check: crown shot: 918, harrassed: 1 (full health: 1000 / drawthresh: 500 / oneshot 0)
+L 04/24/2022 - 04:54:16: -------- Mapchange to c5m3_cemetery --------
+L 04/24/2022 - 04:54:18: [optional/AnneHappy/l4d2_saferoom_item_remove.smx] Removed 0 saferoom item(s) (start: 0; end: 0).

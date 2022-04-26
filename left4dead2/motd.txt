@@ -1,1 +1,8 @@
-http://119.91.138.228/serverip.php
+<html>
+<head>
+<body>
+<body style="background-image : url(https://api.ixiaowai.cn/api/api.php);background-repeat : no-repeat;background-size:100%;background-attachment: fixed;">
+<table width="100%" border="1" cellpadding="1" cellspacing="1">
+</table>
+</body>
+</html>

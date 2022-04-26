@@ -397,7 +397,7 @@
 	}
 	"STEAM_1:0:554791097"
 	{
-		"MELEE_SKILL"		"4"
+		"MELEE_SKILL"		"1"
 		"BLOOD_SKILL"		"0"
 	}
 	"STEAM_1:0:63230264"
@@ -731,6 +731,136 @@
 		"BLOOD_SKILL"		"0"
 	}
 	"STEAM_1:0:245826334"
+	{
+		"MELEE_SKILL"		"4"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:605082747"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:558329695"
+	{
+		"MELEE_SKILL"		"5"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:521874934"
+	{
+		"MELEE_SKILL"		"4"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:167956690"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:137461328"
+	{
+		"MELEE_SKILL"		"1"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:126734124"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:242931201"
+	{
+		"MELEE_SKILL"		"1"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:563197312"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:243986016"
+	{
+		"MELEE_SKILL"		"2"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:461037159"
+	{
+		"MELEE_SKILL"		"1"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:486633466"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:503599858"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:221796702"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:602644924"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:185479205"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:624380617"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:203605631"
+	{
+		"MELEE_SKILL"		"4"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:105715380"
+	{
+		"MELEE_SKILL"		"4"
+		"BLOOD_SKILL"		"1"
+	}
+	"STEAM_1:1:111411321"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:173879571"
+	{
+		"MELEE_SKILL"		"4"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:219354636"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:163156632"
+	{
+		"MELEE_SKILL"		"5"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:517606200"
+	{
+		"MELEE_SKILL"		"3"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:213921236"
+	{
+		"MELEE_SKILL"		"2"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:1:426402157"
+	{
+		"MELEE_SKILL"		"1"
+		"BLOOD_SKILL"		"0"
+	}
+	"STEAM_1:0:454288657"
 	{
 		"MELEE_SKILL"		"4"
 		"BLOOD_SKILL"		"0"

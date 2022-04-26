@@ -60,4 +60,9 @@
 		"type"		"S"
 		"text"		"{LIGHTGREEN}尽量不要被胖子喷哦 被喷不但拖节奏还很难瞄准队友"
 	}
+	"13"
+	{
+		"type"		"S"
+		"text"		"{LIGHTGREEN}本服内置zonemod 2.64对抗插件，初次上线难免有bug望反馈"
+	}
 }

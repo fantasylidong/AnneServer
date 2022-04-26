@@ -153,23 +153,30 @@
 			"message" "20秒"
 		}
 	}
+	"武器配置"
+	{
+		"sm_cvar ZonemodWeapon 0"
+		{
+			"message" "AnneHappy枪械"
+		}
+		"sm_cvar ZonemodWeapon 1"
+		{
+			"message" "zonemod2.6.4枪械"
+		}
+	}
 	"模式选择"
 	{
 		"sm_fm AnneHappy"
 		{
 			"message" "普通药役模式"
 		}
-		"sm_fm AnneHanpy"
+		"sm_fm Hunters"
 		{
 			"message" "1vHunter模式"
 		}
 		"sm_fm Alone"
 		{
 			"message" "单人装B模式"
-		}
-		"sm_fm WitchParty"
-		{
-			"message" "WitchParty模式"
 		}
 	}
 	"开关回血"
@@ -183,18 +190,7 @@
 			"message" "关闭回血"
 		}
 	}
-	"武器配置"
-	{
-		"exec vote/weapon/AnneHappy.cfg"
-		{
-			"message" "AnneHappy枪械"
-		}
-		"exec vote/weapon/zonemod.cfg"
-		{
-			"message" "zonemod1.99枪械"
-		}
-	}
-	"Tank连跳开关"
+	"Tank选项"
 	{
 		"sm_cvar ai_tank_bhop 1"
 		{

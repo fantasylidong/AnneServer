@@ -164,7 +164,7 @@ public Action L4D2_OnChooseVictim(int specialInfected, int &curTarget)
 			float fTargetPos[3], fDistance;
 			GetClientAbsOrigin(curTarget, fTargetPos);
 			fDistance = GetVectorDistance(fSelfPos, fTargetPos);
-			if (IsPinned(curTarget) || !IsIncapped(curTarget))
+			if (IsPinned(curTarget) || IsIncapped(curTarget))
 			{
 				curTarget = GetClosestSurvivor(fSelfPos, curTarget);
 				return Plugin_Changed;
@@ -222,7 +222,7 @@ int TeamShotgunCheck()
 	int iTeamShotgunCount = 0;
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsSurvivor(client) && !IsIncapped(client) && IsPlayerAlive(client) && IsPinned(client))
+		if (IsSurvivor(client) && !IsIncapped(client) && IsPlayerAlive(client) && !IsPinned(client))
 		{
 			g_iMobileSurvivor += 1;
 			char sName[64];
@@ -430,7 +430,7 @@ float NearestSurvivorDistance(int client)
 	GetClientAbsOrigin(client, vPos);
 	for (i = 1; i <= MaxClients; i++)
 	{
-		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i))
+		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i) &&!IsPinned(i))
 		{
 			GetClientAbsOrigin(i, vTargetPos);
 			fDistance[iCount++] = GetVectorDistance(vPos, vTargetPos);

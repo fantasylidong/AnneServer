@@ -499,7 +499,7 @@ float NearestSurvivorDistance(int client)
 	GetClientAbsOrigin(client, vPos);
 	for (i = 1; i <= MaxClients; i++)
 	{
-		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i))
+		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i)&& !IsIncapped(client) && !IsPinned(client))
 		{
 			GetClientAbsOrigin(i, vTargetPos);
 			fDistance[iCount++] = GetVectorDistance(vPos, vTargetPos);
@@ -654,7 +654,7 @@ int GetClosestSurvivor(float refpos[3], int excludeSur = -1)
 	int iClosetAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));
 	for (int client = 1; client < MaxClients; client++)
 	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && client != excludeSur)
+		if (IsSurvivor(client) && IsPlayerAlive(client) && client != excludeSur && !IsIncapped(client) && !IsPinned(client))
 		{
 			GetClientAbsOrigin(client, surPos);
 			int iAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));

@@ -18,18 +18,18 @@ public Plugin myinfo =
 	name 			= "Ai_Jockey增强",
 	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白",
 	description 	= "觉得Ai猴子太弱了？ Try this！",
-	version 		= "22-4-17",
+	version 		= "2022-4-24",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
 // ConVars
-ConVar g_hBhopSpeed, g_hStartHopDistance, g_hJockeyStumbleRadius, g_hJockeyAirAngles;
+ConVar g_hBhopSpeed, g_hStartHopDistance, g_hJockeyStumbleRadius;
 // Ints
-int g_iStartHopDistance, g_iJockeyStumbleRadius;
+int g_iStartHopDistance, g_iState[MAXPLAYERS + 1][8], g_iJockeyStumbleRadius;
 // Float
-float g_fJockeyBhopSpeed, g_fJockeyAirAngles;
+float g_fJockeyBhopSpeed;
 // Bools
-bool  g_bCanLeap[MAXPLAYERS + 1];
+bool g_bHasBeenShoved[MAXPLAYERS + 1], g_bCanLeap[MAXPLAYERS + 1];
 
 #define TEAM_SURVIVOR 2
 #define TEAM_INFECTED 3
@@ -41,16 +41,15 @@ public void OnPluginStart()
 	g_hBhopSpeed = CreateConVar("ai_JockeyBhopSpeed", "80.0", "Jockey连跳的速度", FCVAR_NOTIFY, true, 0.0);
 	g_hStartHopDistance = CreateConVar("ai_JockeyStartHopDistance", "800", "Jockey距离生还者多少距离开始主动连跳", FCVAR_NOTIFY, true, 0.0);
 	g_hJockeyStumbleRadius = CreateConVar("ai_JockeyStumbleRadius", "50", "Jockey骑到人后会对多少范围内的生还者产生硬直效果", FCVAR_NOTIFY, true, 0.0);
-	g_hJockeyAirAngles = CreateConVar("ai_JockeyAirAngles", "60.0", "Jockey的速度方向与到目标的向量方向的距离大于这个角度，则停止连跳", FCVAR_NOTIFY, true, 0.0);
 	// HookEvent
 	HookEvent("player_spawn", evt_PlayerSpawn, EventHookMode_Pre);
 	HookEvent("player_shoved", evt_PlayerShoved, EventHookMode_Pre);
+	HookEvent("player_jump", evt_PlayerJump, EventHookMode_Pre);
 	HookEvent("jockey_ride", evt_JockeyRide);
 	// AddChangeHook
 	g_hBhopSpeed.AddChangeHook(ConVarChanged_Cvars);
 	g_hStartHopDistance.AddChangeHook(ConVarChanged_Cvars);
 	g_hJockeyStumbleRadius.AddChangeHook(ConVarChanged_Cvars);
-	g_hJockeyAirAngles.AddChangeHook(ConVarChanged_Cvars);
 	// GetCvars
 	GetCvars();
 }
@@ -65,13 +64,13 @@ void GetCvars()
 	g_fJockeyBhopSpeed = g_hBhopSpeed.FloatValue;
 	g_iStartHopDistance = g_hStartHopDistance.IntValue;
 	g_iJockeyStumbleRadius = g_hJockeyStumbleRadius.IntValue;
-	g_fJockeyAirAngles = g_hJockeyAirAngles.FloatValue;
 }
 
 public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon)
 {
 	if (IsAiJockey(jockey))
 	{
+		static float fLeftGroundMaxSpeed[MAXPLAYERS + 1];
 		float fSpeed[3], fCurrentSpeed, fJockeyPos[3];
 		GetEntPropVector(jockey, Prop_Data, "m_vecVelocity", fSpeed);
 		fCurrentSpeed = SquareRoot(Pow(fSpeed[0], 2.0) + Pow(fSpeed[1], 2.0));
@@ -83,27 +82,95 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 		if (IsSurvivor(iTarget) && IsPlayerAlive(iTarget))
 		{
 			// 其他操作
-			float fBuffer[3], fTargetPos[3];
+			float fBuffer[3], fTargetPos[3], fTargetAngles[3];
 			GetClientAbsOrigin(iTarget, fTargetPos);
 			fBuffer = UpdatePosition(jockey, iTarget, g_fJockeyBhopSpeed);
-			if (GetEntProp(jockey, Prop_Send, "m_hasVisibleThreats") == 0)
+			if (iFlags == FL_JUMPING && fLeftGroundMaxSpeed[jockey] == -1.0)
+			{
+				fLeftGroundMaxSpeed[jockey] = GetEntPropFloat(jockey, Prop_Data, "m_flMaxspeed");
+			}
+			if (GetEntProp(jockey, Prop_Send, "m_hasVisibleThreats") == 0 || g_bHasBeenShoved[jockey])
 			{
 				return Plugin_Continue;
 			}
 			float fDistance = NearestSurvivorDistance(jockey);
-			if (fCurrentSpeed > 200.0)
+			if (fCurrentSpeed > 130.0)
 			{
 				// 距离目标距离小于给定距离
-				if (250<fDistance < float(g_iStartHopDistance))
+				if (fDistance < float(g_iStartHopDistance))
 				{
 					if (iFlags & FL_ONGROUND)
 					{
-						buttons |= IN_DUCK;
-						buttons |= IN_JUMP;
-						if ((buttons & IN_FORWARD) || (buttons & IN_BACK) || (buttons & IN_MOVELEFT) || (buttons & IN_MOVERIGHT))
+						if (fDistance < 250.0)
 						{
-							ClientPush(jockey, fBuffer);
+							if (fLeftGroundMaxSpeed[jockey] != -1.0 && fCurrentSpeed > 250.0)
+							{
+								float fCurrentSpeedVector[3];
+								GetEntPropVector(jockey, Prop_Data, "m_vecAbsVelocity", fCurrentSpeedVector);
+								if (GetVectorLength(fCurrentSpeedVector) > fLeftGroundMaxSpeed[jockey])
+								{
+									NormalizeVector(fCurrentSpeedVector, fCurrentSpeedVector);
+									ScaleVector(fCurrentSpeedVector, fLeftGroundMaxSpeed[jockey]);
+									TeleportEntity(jockey, NULL_VECTOR, NULL_VECTOR, fCurrentSpeedVector);
+								}
+								fLeftGroundMaxSpeed[jockey] = -1.0;
+							}
+							if (GetState(jockey, 0) == IN_JUMP)
+							{
+								bool bIsWatchingJockey = IsTargetWatchingAttacker(jockey, 20);
+								// 如果在地上且目标正在看着jockey
+								if (angles[2] == 0.0 && bIsWatchingJockey)
+								{
+									angles = angles;
+									angles[0] = GetRandomFloat(-30.0, -10.0);
+									TeleportEntity(jockey, NULL_VECTOR, angles, NULL_VECTOR);
+								}
+								buttons |= IN_ATTACK;
+								buttons |= IN_ATTACK2;
+								SetState(jockey, 0, IN_ATTACK);
+							}
+							else
+							{
+								if(angles[2] == 0.0) 
+								{
+									angles[0] = GetRandomFloat(-10.0, 0.0);
+									TeleportEntity(jockey, NULL_VECTOR, angles, NULL_VECTOR);
+								}
+								buttons |= IN_JUMP;
+								switch (GetRandomInt(0, 2))
+								{
+									case 0:
+									{
+										buttons |= IN_DUCK;
+									}
+									case 1:
+									{
+										buttons |= IN_ATTACK2;
+									}
+								}
+								SetState(jockey, 0, IN_JUMP);
+							}
 						}
+						else
+						{
+							buttons |= IN_JUMP;
+							buttons |= IN_ATTACK2;
+							SetState(jockey, 0, IN_JUMP);
+							if ((buttons & IN_FORWARD) || (buttons & IN_BACK) || (buttons & IN_MOVELEFT) || (buttons & IN_MOVERIGHT))
+							{
+								ClientPush(jockey, fBuffer);
+							}
+						}
+					}
+					// 不在地上，禁止按下跳跃键和攻击键
+					else
+					{
+						// 锁定视野
+						ComputeAimAngles(jockey, iTarget, fTargetAngles, AimChest);
+						fTargetAngles[2] = 0.0;
+						TeleportEntity(jockey, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
+						buttons &= ~IN_JUMP;
+						buttons &= ~IN_ATTACK;
 					}
 				}
 			}
@@ -113,42 +180,32 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 			buttons &= ~IN_JUMP;
 			buttons &= ~IN_DUCK;
 		}
-		if (iFlags == FL_JUMPING)
-		{
-			int NewTarget = NearestSurvivor(jockey);	float fTargetPos[3];
-			if (NewTarget > 0)
-			{
-				GetClientAbsOrigin(NewTarget, fTargetPos);
-				if (GetVectorDistance(fJockeyPos, fTargetPos) < 100.0)
-				{
-					// 防止连跳过头
-					float fAnglesPost[3], fAngles[3];
-					GetVectorDistance(fSpeed, fAngles);
-					fAnglesPost = fAngles;
-					fAngles[0] = fAngles[2] = 0.0;
-					GetAngleVectors(fAngles, fAngles, NULL_VECTOR, NULL_VECTOR);
-					NormalizeVector(fAngles, fAngles);
-					// 保存当前位置
-					static float fDirection[2][3];
-					fDirection[0] = fJockeyPos;
-					fDirection[1] = fTargetPos;
-					fJockeyPos[2] = fTargetPos[2] = 0.0;
-					MakeVectorFromPoints(fJockeyPos, fTargetPos, fJockeyPos);
-					NormalizeVector(fJockeyPos, fJockeyPos);
-					// 计算距离
-					if (RadToDeg(ArcCosine(GetVectorDotProduct(fAngles, fJockeyPos))) < g_fJockeyAirAngles)
-					{
-						return Plugin_Continue;
-					}
-					// 重新设置速度方向
-					float fNewVelocity[3];
-					MakeVectorFromPoints(fDirection[0], fDirection[1], fNewVelocity);
-					TeleportEntity(jockey, NULL_VECTOR, fAnglesPost, fNewVelocity);
-				}
-			}
-		}
 	}
 	return Plugin_Continue;
+}
+
+void ComputeAimAngles(int client, int target, float angles[3], AimType type = AimEye)
+{
+	float selfpos[3], targetpos[3], lookat[3];
+	GetClientEyePosition(client, selfpos);
+	switch (type)
+	{
+		case AimEye:
+		{
+			GetClientEyePosition(target, targetpos);
+		}
+		case AimBody:
+		{
+			GetClientAbsOrigin(target, targetpos);
+		}
+		case AimChest:
+		{
+			GetClientAbsOrigin(target, targetpos);
+			targetpos[2] += 45.0;
+		}
+	}
+	MakeVectorFromPoints(selfpos, targetpos, lookat);
+	GetVectorAngles(lookat, angles);
 }
 
 public Action evt_PlayerShoved(Event event, const char[] name, bool dontBroadcast)
@@ -156,6 +213,7 @@ public Action evt_PlayerShoved(Event event, const char[] name, bool dontBroadcas
 	int iShovedPlayer = GetClientOfUserId(event.GetInt("userid"));
 	if (IsAiJockey(iShovedPlayer))
 	{
+		g_bHasBeenShoved[iShovedPlayer] = true;
 		g_bCanLeap[iShovedPlayer] = false;
 		int fLeapCooldown = GetConVarInt(FindConVar("z_jockey_leap_again_timer"));
 		CreateTimer(float(fLeapCooldown), Timer_LeapCoolDown, iShovedPlayer, TIMER_FLAG_NO_MAPCHANGE);
@@ -163,11 +221,21 @@ public Action evt_PlayerShoved(Event event, const char[] name, bool dontBroadcas
 	return Plugin_Continue;
 }
 
+public void evt_PlayerJump(Event event, const char[] name, bool dontBroadcast)
+{
+	int iJumpingPlayer = GetClientOfUserId(event.GetInt("userid"));
+	if (IsAiJockey(iJumpingPlayer))
+	{
+		g_bHasBeenShoved[iJumpingPlayer] = false;
+	}
+}
+
 public Action evt_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int iSpawnPlayer = GetClientOfUserId(event.GetInt("userid"));
 	if (IsAiJockey(iSpawnPlayer))
 	{
+		g_bHasBeenShoved[iSpawnPlayer] = false;
 		g_bCanLeap[iSpawnPlayer] = true;
 	}
 	return Plugin_Handled;
@@ -176,7 +244,6 @@ public Action evt_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 public Action Timer_LeapCoolDown(Handle timer, int jockey)
 {
 	g_bCanLeap[jockey] = true;
-	return Plugin_Continue;
 }
 
 public void evt_JockeyRide(Event event, const char[] name, bool dontBroadcast)
@@ -274,7 +341,7 @@ float NearestSurvivorDistance(int client)
 	GetClientAbsOrigin(client, vPos);
 	for (i = 1; i <= MaxClients; i++)
 	{
-		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i))
+		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i) && !IsPinned(client))
 		{
 			GetClientAbsOrigin(i, vTarget);
 			fDistance[iCount++] = GetVectorDistance(vPos, vTarget);
@@ -295,7 +362,7 @@ int NearestSurvivor(int attacker)
 	GetClientAbsOrigin(attacker, selfPos);
 	for (int client = 1; client <= MaxClients; ++client)
 	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && !IsIncapped(client))
+		if (IsSurvivor(client) && IsPlayerAlive(client) && !IsIncapped(client) && !IsPinned(client))
 		{
 			GetClientAbsOrigin(client, targetPos);
 			float fDistance = GetVectorDistance(selfPos, targetPos);
@@ -309,7 +376,61 @@ int NearestSurvivor(int attacker)
 	return iTarget;
 }
 
-float[] UpdatePosition(int jockey, int target, float fForce)
+bool IsTargetWatchingAttacker(int attacker, int offset)
+{
+	bool bIsWatching = true;
+	if (GetClientTeam(attacker) == TEAM_INFECTED && IsPlayerAlive(attacker))
+	{
+		int iTarget = GetClientAimTarget(attacker);
+		if (IsSurvivor(iTarget))
+		{
+			int iOffset = RoundToNearest(GetPlayerAimOffset(iTarget, attacker));
+			if (iOffset <= offset)
+			{
+				bIsWatching = true;
+			}
+			else
+			{
+				bIsWatching = false;
+			}
+		}
+	}
+	return bIsWatching;
+}
+
+float GetPlayerAimOffset(int attacker, int target)
+{
+	if (IsClientConnected(attacker) && IsClientInGame(attacker) && IsPlayerAlive(attacker) && IsClientConnected(target) && IsClientInGame(target) && IsPlayerAlive(target))
+	{
+		float fAttackerPos[3], fTargetPos[3], fAimVector[3], fDirectVector[3], fResultAngle;
+		GetClientEyeAngles(attacker, fAimVector);
+		fAimVector[0] = fAimVector[2] = 0.0;
+		GetAngleVectors(fAimVector, fAimVector, NULL_VECTOR, NULL_VECTOR);
+		NormalizeVector(fAimVector, fAimVector);
+		// 获取目标位置
+		GetClientAbsOrigin(target, fTargetPos);
+		GetClientAbsOrigin(attacker, fAttackerPos);
+		fAttackerPos[2] = fTargetPos[2] = 0.0;
+		MakeVectorFromPoints(fAttackerPos, fTargetPos, fDirectVector);
+		NormalizeVector(fDirectVector, fDirectVector);
+		// 计算角度
+		fResultAngle = RadToDeg(ArcCosine(GetVectorDotProduct(fAimVector, fDirectVector)));
+		return fResultAngle;
+	}
+	return -1.0;
+}
+
+void SetState(int client, int no, int value)
+{
+	g_iState[client][no] = value;
+}
+
+int GetState(int client, int no)
+{
+	return g_iState[client][no];
+}
+
+float UpdatePosition(int jockey, int target, float fForce)
 {
 	float fBuffer[3], fTankPos[3], fTargetPos[3];
 	GetClientAbsOrigin(jockey, fTankPos);	GetClientAbsOrigin(target, fTargetPos);

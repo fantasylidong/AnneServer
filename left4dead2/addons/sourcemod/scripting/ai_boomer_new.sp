@@ -338,7 +338,7 @@ float NearestSurvivorDistance(int client)
 	GetClientAbsOrigin(client, vPos);
 	for (i = 1; i <= MaxClients; i++)
 	{
-		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i))
+		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i))
 		{
 			GetClientAbsOrigin(i, vTarget);
 			fDistance[iCount++] = GetVectorDistance(vPos, vTarget);

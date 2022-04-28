@@ -841,7 +841,7 @@ float NearestSurvivorDistance(int client)
 	GetClientAbsOrigin(client, selfpos);
 	for (int target = 1; target <= MaxClients; target++)
 	{
-		if (IsClientInGame(target) && IsValidSurvivor(target) && IsPlayerAlive(target) && !IsIncapped(target))
+		if (IsClientInGame(target) && IsValidSurvivor(target) && IsPlayerAlive(target) && !IsIncapped(target) && !IsPinned(target))
 		{
 			float targetpos[3] = 0.0;
 			GetClientAbsOrigin(target, targetpos);

@@ -667,7 +667,7 @@ bool PlayerVisibleTo(float spawnpos[3])
 			g_iSurvivors[g_iSurvivorNum] = i;
 			g_iSurvivorNum++;
 			GetClientEyePosition(i, pos);
-			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 250.0)
+			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 350.0)
 			{
 				return true;
 			}
@@ -843,14 +843,18 @@ bool IsSpitter(int client)
 
 int HasAnyCountFull()
 {
-	int  iSurvivors[4] = {0}, iSurvivorIndex = 0;
+	int  iSurvivors[4] = {0}, iSurvivorIndex = 0, FurthestAlivePlayer=0;
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client))
+		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client) && !L4D_IsPlayerIncapacitated(client))
 		{
 			g_bIsLate = true;
 			if (iSurvivorIndex < 4)
 			{
+				if(FurthestAlivePlayer==0)
+					FurthestAlivePlayer=client;
+				else if(L4D2Direct_GetFlowDistance(client)>L4D2Direct_GetFlowDistance(FurthestAlivePlayer))
+					FurthestAlivePlayer=client;
 				iSurvivors[iSurvivorIndex] = client;
 				iSurvivorIndex += 1;
 			}
@@ -860,9 +864,21 @@ int HasAnyCountFull()
 	{
 		g_iTargetSurvivor = iSurvivors[GetRandomInt(0, iSurvivorIndex - 1)];
 	}
-	else
+	for (int client = 1; client <= MaxClients; client++)
 	{
-		g_iTargetSurvivor = L4D_GetHighestFlowSurvivor();
+		if (IsValidSurvivor(client) && IsPlayerAlive(client))
+		{
+			if(client == FurthestAlivePlayer)
+				continue;
+			float abs[3],abs2[3];
+			GetClientAbsOrigin(client,abs);
+			GetClientAbsOrigin(FurthestAlivePlayer,abs2);
+			if(GetVectorDistance(abs,abs2)>1500.0)
+			{
+				g_iTargetSurvivor =FurthestAlivePlayer;
+				break;
+			}
+		}
 	}
 	return iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit;
 }

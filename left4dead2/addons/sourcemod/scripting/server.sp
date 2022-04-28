@@ -22,10 +22,8 @@ public Plugin myinfo =
 }
 new Float:lastDisconnectTime;
 new Handle:hCvarMotdTitle;
-new ConVar:g_ConVarUnloadExtNum;
 new Handle:hCvarMotdUrl;
 new Handle:hCvarIPUrl;
-int g_iCvarUnloadExtNum;
 public OnPluginStart()
 {
 	RegConsoleCmd("sm_away", AFKTurnClientToSpe);
@@ -47,26 +45,36 @@ public OnPluginStart()
 	hCvarMotdTitle = CreateConVar("sm_cfgmotd_title", "AnneHappy");
     hCvarMotdUrl = CreateConVar("sm_cfgmotd_url", "http://111.67.204.59/aliyun/serverip.php");  // 以后更换为数据库控制
 	hCvarIPUrl = CreateConVar("sm_cfgip_url", "http://111.67.204.59/aliyun/serverip.php");	// 以后更换为数据库控制
-	g_ConVarUnloadExtNum = CreateConVar("server_unload_ext_num", 	"5", 	"如果你有Accelerator扩展, 你需要明确知道这个拓展在list中的顺序，用这个命令查看: sm exts list，如果没有设置为0", CVAR_FLAGS);
-	GetCvars();
-	g_ConVarUnloadExtNum.AddChangeHook(OnCvarChanged);
-	AutoExecConfig(true, "server");
 }
-public void OnCvarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-	GetCvars();
-}
-void GetCvars()
-{
-	g_iCvarUnloadExtNum = g_ConVarUnloadExtNum.IntValue;
-}
+
 void UnloadAccelerator()
 {
-	if( g_iCvarUnloadExtNum )
+	int Id = GetAcceleratorId();
+	if (Id != -1)
 	{
-		ServerCommand("sm exts unload %i 0", g_iCvarUnloadExtNum);
+		ServerCommand("sm exts unload %i 0", Id);
+		ServerExecute();
 	}
 }
+
+// by sorallll
+int GetAcceleratorId()
+{
+	char sBuffer[512];
+	ServerCommandEx(sBuffer, sizeof(sBuffer), "sm exts list");
+	int index = SplitString(sBuffer, "] Accelerator (", sBuffer, sizeof(sBuffer));
+	if (index == -1)
+		return -1;
+
+	for (int i = strlen(sBuffer); i >= 0; i--)
+	{
+		if(sBuffer[i] == '[')
+			return StringToInt(sBuffer[i + 1]);
+	}
+
+	return -1;
+}
+
 public Action RestartServer(client,args)
 {
 	UnloadAccelerator();

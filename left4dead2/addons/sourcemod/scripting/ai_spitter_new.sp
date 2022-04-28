@@ -249,7 +249,7 @@ int NearestSurvivor(int attacker)
 	GetClientAbsOrigin(attacker, selfPos);
 	for (int client = 1; client <= MaxClients; ++client)
 	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && !IsIncapped(client))
+		if (IsSurvivor(client) && IsPlayerAlive(client))
 		{
 			GetClientAbsOrigin(client, targetPos);
 			float fDistance = GetVectorDistance(selfPos, targetPos);

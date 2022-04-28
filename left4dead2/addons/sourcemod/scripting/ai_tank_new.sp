@@ -369,7 +369,9 @@ public Action OnPlayerRunCmd(int tank, int &buttons, int &impulse, float vel[3],
 							float fNewVelocity[3];
 							MakeVectorFromPoints(fDirection[0], fDirection[1], fNewVelocity);
 							NormalizeVector(fNewVelocity, fNewVelocity);
-							ScaleVector(fNewVelocity, fCurrentSpeed);
+							//ScaleVector(fNewVelocity, fCurrentSpeed);  
+							//加速太快了
+							ScaleVector(fNewVelocity, fCurrentSpeed * 0.7;
 							TeleportEntity(tank, NULL_VECTOR, fAnglesPost, fNewVelocity);
 						}
 					}

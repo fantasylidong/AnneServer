@@ -227,9 +227,10 @@ public void OnGameFrame()
 				}
 				else
 				{
-					dist = 250.0 + g_fSpawnDistanceMax;
+					dist = 300.0 + g_fSpawnDistanceMax;
 					fMaxs[2] = fSurvivorPos[2] + g_fSpawnDistanceMax;
 				}
+				fMaxs[2] = fSurvivorPos[2] + g_fSpawnDistanceMax;
 				fMins[0] = fSurvivorPos[0] - g_fSpawnDistanceMax;
 				fMaxs[0] = fSurvivorPos[0] + g_fSpawnDistanceMax;
 				fMins[1] = fSurvivorPos[1] - g_fSpawnDistanceMax;
@@ -302,33 +303,7 @@ public void OnGameFrame()
 						}
 					}
 				}
-				else
-				{
-					int iZombieClass;
-					L4D_GetRandomPZSpawnPosition(g_iTargetSurvivor, iZombieClass, 1, fSpawnPos);
-					if(!PlayerVisibleTo(fSpawnPos))
-					{
-						for (int i = 0; i < g_iSurvivorNum; i++)
-						{
-							int index4 = g_iSurvivors[i];
-							GetClientEyePosition(index4, fSurvivorPos);
-							if (L4D2_VScriptWrapper_NavAreaBuildPath(fSpawnPos, fSurvivorPos, dist, false, false, TEAM_INFECTED, false) && GetVectorDistance(fSurvivorPos, fSpawnPos) < g_fSpawnDistanceMax)
-							{
-								iZombieClass = IsBotTypeNeeded();
-								if (iZombieClass > 0 && g_iSpawnMaxCount > 0)
-								{
-									int entityindex = L4D2_SpawnSpecial(iZombieClass, fSpawnPos, view_as<float>({0.0, 0.0, 0.0}));
-									if (IsValidEntity(entityindex) && IsValidEdict(entityindex))
-									{
-										g_iSpawnMaxCount -= 1;
-										addlimit(iZombieClass);
-										print_type(iZombieClass,g_fSpawnDistanceMax);
-									}
-								}
-							}
-						}
-					}
-				}
+				
 			}			
 		}
 	
@@ -541,7 +516,7 @@ public Action SpawnNewInfected(Handle timer)
 				}
 			}
 		}
-		g_fSpawnDistanceMax = 250.0;
+		g_fSpawnDistanceMax = 500.0;
 		ResetInfectedNumber();
 
 		g_iSpawnMaxCount += 1;
@@ -633,7 +608,7 @@ bool PlayerVisibleTo(float spawnpos[3])
 			g_iSurvivors[g_iSurvivorNum] = i;
 			g_iSurvivorNum++;
 			GetClientEyePosition(i, pos);
-			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 250.0)
+			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 300.0)
 			{
 				return true;
 			}
@@ -654,7 +629,7 @@ bool TeleportPlayerVisibleTo(float spawnpos[3])
 			g_iSurvivors[g_iSurvivorNum] = i;
 			g_iSurvivorNum++;
 			GetClientEyePosition(i, pos);
-			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 250.0)
+			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 300.0)
 			{
 				return true;
 			}
@@ -834,7 +809,7 @@ int HasAnyCountFull()
 	int  iSurvivors[4] = {0}, iSurvivorIndex = 0;
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client)) 
+		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client) && !L4D_IsPlayerIncapacitated(client) && !isHangingLedge(client)) 
 		{
 			g_bIsLate = true;
 			if (iSurvivorIndex < 4)
@@ -1117,4 +1092,7 @@ stock bool Debug_Print(char[] format, any ...)
 	#else
 	return false;
 	#endif
+}
+bool isHangingLedge(int client) {
+	return GetEntProp(client, Prop_Send, "m_isHangingFromLedge") == 1;
 }

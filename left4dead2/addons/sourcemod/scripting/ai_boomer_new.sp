@@ -5,7 +5,6 @@
 #include <sourcemod>
 #include <sdktools>
 #include <left4dhooks>
-
 enum AimType
 {
 	AimEye,
@@ -18,7 +17,7 @@ public Plugin myinfo =
 	name 			= "Ai-Boomer增强",
 	author 			= "夜羽真白，东",
 	description 	= "觉得Ai-Boomer不够强， Try this！",
-	version 		= "22-4-24",
+	version 		= "1.0.1.0",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
@@ -91,15 +90,13 @@ public Action OnPlayerRunCmd(int boomer, int &buttons, int &impulse, float vel[3
 {
 	if (IsAiBoomer(boomer))
 	{
-		static float fSpeed[3], fCurrentSpeed, fDistance;
+		float fSpeed[3] = {0.0}, fCurrentSpeed = 0.0, fDistance = 0.0, fBoomerPos[3] = {0.0};
 		GetEntPropVector(boomer, Prop_Data, "m_vecVelocity", fSpeed);
 		fCurrentSpeed = SquareRoot(Pow(fSpeed[0], 2.0) + Pow(fSpeed[1], 2.0));
 		fDistance = NearestSurvivorDistance(boomer);
 		// 获取状态，目标
-		int iFlags = GetEntityFlags(boomer);
-		int iTarget = GetClientAimTarget(boomer, true);
+		int iFlags = GetEntityFlags(boomer), iTarget = GetClientAimTarget(boomer, true);
 		bool bHasSight = view_as<bool>(GetEntProp(boomer, Prop_Send, "m_hasVisibleThreats"));
-		float fBoomerPos[3], fTargetAngles[3];
 		GetClientAbsOrigin(boomer, fBoomerPos);
 		// 靠近生还者，立即喷吐，不需要在地上，空中也能吐
 		if(g_bBoomerJumpAbility && bHasSight && fDistance <= g_fVomitRange-100.0 && bCanVomit[boomer])
@@ -112,19 +109,13 @@ public Action OnPlayerRunCmd(int boomer, int &buttons, int &impulse, float vel[3
 			buttons |= IN_FORWARD;
 			buttons |= IN_ATTACK;
 		}
+		
 		else if (bHasSight && 0.5 * g_fVomitRange < fDistance < 10000.0 && fCurrentSpeed > 160.0)
 		{
-			if (iTarget > 0)
+			if (IsSurvivor(iTarget))
 			{
-				if (bHasSight)
-				{
-					// 锁定视野
-					ComputeAimAngles(boomer, iTarget, fTargetAngles, AimChest);
-					fTargetAngles[2] = 0.0;
-					TeleportEntity(boomer, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
-				}
 				// 连跳操作
-				float fBuffer[3], fTargetPos[3];
+				float fBuffer[3] = {0.0}, fTargetPos[3] = {0.0};
 				GetClientAbsOrigin(iTarget, fTargetPos);
 				fBuffer = UpdatePosition(boomer, iTarget, g_fBoomerBhopSpeed);
 				if (g_bBoomerBhop)
@@ -170,13 +161,6 @@ public Action OnPlayerRunCmd(int boomer, int &buttons, int &impulse, float vel[3
 						}
 					}
 				}
-			}
-			else
-			{
-				int iNewTarget = GetClosestSurvivor(fBoomerPos);
-				ComputeAimAngles(boomer, iNewTarget, fTargetAngles, AimChest);
-				fTargetAngles[2] = 0.0;
-				TeleportEntity(boomer, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
 			}
 		}
 		if (GetEntityMoveType(boomer) & MOVETYPE_LADDER)
@@ -338,7 +322,7 @@ float NearestSurvivorDistance(int client)
 	GetClientAbsOrigin(client, vPos);
 	for (i = 1; i <= MaxClients; i++)
 	{
-		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i))
+		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i))
 		{
 			GetClientAbsOrigin(i, vTarget);
 			fDistance[iCount++] = GetVectorDistance(vPos, vTarget);
@@ -375,7 +359,7 @@ void ClientPush(int client, float fForwardVec[3])
 
 bool IsSurvivor(int client)
 {
-	if (client && client <= MaxClients && IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR)
+	if (client > 0 && client <= MaxClients && IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR)
 	{
 		return true;
 	}
@@ -385,87 +369,10 @@ bool IsSurvivor(int client)
 	}
 }
 
-bool IsVisible(int client, int target)
-{
-	bool bCanSee = false;
-	float selfpos[3], angles[3];
-	GetClientEyePosition(client, selfpos);
-	ComputeAimAngles(client, target, angles);
-	Handle hTrace = TR_TraceRayFilterEx(selfpos, angles, MASK_SOLID, RayType_Infinite, traceFilter, client);
-	if (TR_DidHit(hTrace))
-	{
-		int hit = TR_GetEntityIndex(hTrace);
-		if (hit == target)
-		{
-			bCanSee = true;
-		}
-	}
-	delete hTrace;
-	return bCanSee;
-}
 
-bool traceFilter(int entity, int mask, int self)
-{
-	return entity != self;
-}
 
 bool IsIncapped(int client)
 {
     return view_as<bool>(GetEntProp(client, Prop_Send, "m_isIncapacitated"));
 }
 
-void ComputeAimAngles(int client, int target, float angles[3], AimType type = AimEye)
-{
-	if(client<0||client>MaxClients||target<0||target>MaxClients)
-		return;
-	float selfpos[3], targetpos[3], lookat[3];
-	GetClientEyePosition(client, selfpos);
-	switch (type)
-	{
-		case AimEye:
-		{
-			GetClientEyePosition(target, targetpos);
-		}
-		case AimBody:
-		{
-			GetClientAbsOrigin(target, targetpos);
-		}
-		case AimChest:
-		{
-			GetClientAbsOrigin(target, targetpos);
-			targetpos[2] += 45.0;
-		}
-	}
-	MakeVectorFromPoints(selfpos, targetpos, lookat);
-	GetVectorAngles(lookat, angles);
-}
-
-int GetClosestSurvivor(float refpos[3], int excludeSur = -1)
-{
-	float surPos[3];	int closetSur = GetRandomSurvivor();
-	if (closetSur == 0)
-	{
-		return 0;
-	}
-	GetClientAbsOrigin(closetSur, surPos);
-	int iClosetAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));
-	for (int client = 1; client < MaxClients; client++)
-	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && client != excludeSur)
-		{
-			GetClientAbsOrigin(client, surPos);
-			int iAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));
-			if (iClosetAbsDisplacement < 0)
-			{
-				iClosetAbsDisplacement = iAbsDisplacement;
-				closetSur = client;
-			}
-			else if (iAbsDisplacement < iClosetAbsDisplacement)
-			{
-				iClosetAbsDisplacement = iAbsDisplacement;
-				closetSur = client;
-			}
-		}
-	}
-	return closetSur;
-}

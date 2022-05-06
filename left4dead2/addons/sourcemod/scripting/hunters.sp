@@ -575,7 +575,7 @@ public Action SpawnNewInfected(Handle timer)
 				}
 			}
 		}
-		g_fSpawnDistanceMax = 400.0;
+		g_fSpawnDistanceMax = 350.0;
 		ResetInfectedNumber();
 
 		g_iSpawnMaxCount += 1;
@@ -798,7 +798,7 @@ bool CanBeTeleport(int client)
 	}
 }
 
-//5秒内以0.1s检测一次，49次没被看到，就可以传送了
+//3秒内以0.1s检测一次，29次没被看到，就可以传送了
 public Action Timer_PositionSi(Handle timer)
 {
 	for (int client = 1; client <= MaxClients; client++)
@@ -808,7 +808,7 @@ public Action Timer_PositionSi(Handle timer)
 			GetClientEyePosition(client, fSelfPos);
 			if (!PlayerVisibleTo(fSelfPos))
 			{
-				if (g_iTeleCount[client] > 49)
+				if (g_iTeleCount[client] > 29)
 				{
 					Debug_Print("%N开始传送",client);
 					if (!PlayerVisibleTo(fSelfPos) && !IsPinningSomeone(client))
@@ -870,12 +870,14 @@ int HasAnyCountFull()
 		{
 			if(client == FurthestAlivePlayer)
 				continue;
+			if(FurthestAlivePlayer == 0)
+				break;
 			float abs[3],abs2[3];
 			GetClientAbsOrigin(client,abs);
 			GetClientAbsOrigin(FurthestAlivePlayer,abs2);
-			if(GetVectorDistance(abs,abs2)>1500.0)
+			if(GetVectorDistance(abs,abs2) > 1500.0)
 			{
-				g_iTargetSurvivor =FurthestAlivePlayer;
+				g_iTargetSurvivor = FurthestAlivePlayer;
 				break;
 			}
 		}

@@ -42,7 +42,7 @@
 // TANK
 #define TANKMELEESCANDELAY 0.0
 #define TANKROCKAIMTIME 3.5
-#define TANKAFTERTHROW 1.0
+#define TANKAFTERTHROW 2.0
 #define TANKROCKAIMDELAY 0.25
 #define TANKATTACKRANGEFACTOR 0.90
 #define TANKTHROWHEIGHT 100.0
@@ -72,7 +72,7 @@ public Plugin myinfo =
 	name 			= "Advance Special Infected AI",
 	author 			= "def075, Caibiii, 夜羽真白，东",
 	description 	= "Advanced Special Infected AI",
-	version 		= "2022.04.24",
+	version 		= "2022.05.02",
 	url 			= "https://github.com/Caibiii/AnneServer"
 }
 
@@ -148,38 +148,7 @@ public void evt_TankSpawn(Event event, const char[] name, bool dontBroadcast)
 		SDKHook(client, SDKHook_PostThinkPost, UpdateThink);
 	}
 }
-/* 添加到消耗tank插件中
-// 坦克扔石头力度大小，跳砖设置
-public Action L4D_OnCThrowActivate(int ability)
-{
-	SetConVarString(FindConVar("z_tank_throw_force"), "1000");
-	int tankclient = GetEntPropEnt(ability, Prop_Data, "m_hOwnerEntity");
-	if (IsInfectedBot(tankclient) && GetZombieClass(tankclient) == ZC_TANK)
-	{
-		RequestFrame(NextFrame_JumpRock, tankclient);
-	}
-	return Plugin_Continue;
-}
 
-void NextFrame_JumpRock(int tankclient)
-{
-	int target = GetNearestSurvivor(tankclient);
-	if (IsValidSurvivor(target))
-	{
-		int flags = GetEntityFlags(tankclient);
-		if (flags & FL_ONGROUND)
-		{
-			float eyeangles[3] = 0.0, lookat[3] = 0.0;
-			GetClientEyeAngles(tankclient, eyeangles);
-			GetAngleVectors(eyeangles, lookat, NULL_VECTOR, NULL_VECTOR);
-			NormalizeVector(lookat, lookat);
-			ScaleVector(lookat, 300.0);
-			lookat[2] = 300.0;
-			TeleportEntity(tankclient, NULL_VECTOR, NULL_VECTOR, lookat);
-		}
-	}
-}
-*/
 public void L4D_TankClaw_DoSwing_Pre(int tank, int claw)
 {
 	SetConVarString(FindConVar("z_tank_throw_force"), "500");
@@ -298,7 +267,8 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 // *********************
 public Action OnJockeyRunCmd(int client, int &buttons, float vel[3], float angles[3])
 {
-	if (GetMoveSpeed(client) > JOCKEYMINSPEED && (buttons & IN_FORWARD) && (GetEntityFlags(client) & FL_ONGROUND) && (GetEntityMoveType(client) != MOVETYPE_LADDER) 
+	bool bHasSight = view_as<bool>(GetEntProp(client, Prop_Send, "m_hasVisibleThreats"));
+	if (bHasSight && GetMoveSpeed(client) > JOCKEYMINSPEED && (buttons & IN_FORWARD) && (GetEntityFlags(client) & FL_ONGROUND) && (GetEntityMoveType(client) != MOVETYPE_LADDER) 
 	&& (NearestSurvivorDistance(client) < JOCKEYJUMPRANGE && DelayExpired(client, 0, JOCKEYJUMPNEARDELAY) || DelayExpired(client, 0, JOCKEYJUMPDELAY)))
 	{
 		vel[0] = VEM_MAX;
@@ -306,7 +276,7 @@ public Action OnJockeyRunCmd(int client, int &buttons, float vel[3], float angle
 		{
 			if (angles[2] == 0.0)
 			{
-				angles[0] = GetRandomFloat(-10.0, -10.0);
+				angles[0] = GetRandomFloat(-30.0, -10.0);
 				TeleportEntity(client, NULL_VECTOR, angles, NULL_VECTOR);
 			}
 			buttons |= IN_ATTACK;
@@ -435,7 +405,6 @@ public Action OnHunterRunCmd(int client, int &buttons, float vel[3], float angle
 
 public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[3])
 {
-	bool bHasSight = view_as<bool>(GetEntProp(client, Prop_Send, "m_hasVisibleThreats"));
 	if (GetEntityMoveType(client) != MOVETYPE_LADDER)
 	{
 		float tankattackrange = -1.0, tankspeed = -1.0;
@@ -488,7 +457,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 			// 2022-4-8更新：判断目标有效，判断目标是否可见
 			for (int survivor = 1; survivor <= MaxClients; survivor++)
 			{
-				if (IsValidSurvivor(survivor))
+				if (IsClientConnected(survivor) && IsClientInGame(survivor) && IsPlayerAlive(survivor) && GetClientTeam(survivor) == TEAM_SURVIVOR && !IsIncapped(survivor) && !IsPinned(survivor))
 				{
 					survivorcount += 1;
 				}
@@ -498,7 +467,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 			{
 				GetClientAbsOrigin(firsttarget, targetpos);
 				targetpos[2] += SURVIVORHEIGHT;
-				hTrace = TR_TraceRayFilterEx(selfpos, targetpos, MASK_NPCSOLID_BRUSHONLY, RayType_EndPoint, traceFilter, client);
+				hTrace = TR_TraceRayFilterEx(selfpos, targetpos, MASK_SHOT, RayType_EndPoint, traceFilter, client);
 				if (!TR_DidHit(hTrace))
 				{
 					targetclient = firsttarget;
@@ -508,8 +477,8 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 				}
 				else
 				{
-					int entity = 0;
-					char classname[64];
+					int entity = -1;
+					char classname[64] = '\0';
 					entity = TR_GetEntityIndex(hTrace);
 					GetEntityClassname(entity, classname, sizeof(classname));
 					if (strcmp(classname, "player") != 0 && strcmp(classname, "env_physics_blocker") != 0 && strcmp(classname, "tank_rock") != 0)
@@ -517,22 +486,20 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 						hittimes += 1;
 						for (int newtarget = 1; newtarget <= MaxClients; newtarget++)
 						{
-							if (IsValidSurvivor(newtarget))
+							// 生还者有效，未死亡，且未倒地与被控状态下
+							if (IsClientConnected(newtarget) && IsClientInGame(newtarget) && IsPlayerAlive(newtarget) && GetClientTeam(newtarget) == TEAM_SURVIVOR && IsPlayerAlive(newtarget) && !IsIncapped(newtarget) && !IsPinned(newtarget))
 							{
 								GetClientAbsOrigin(newtarget, targetpos);
 								targetpos[2] += SURVIVORHEIGHT;
-								hTrace = TR_TraceRayFilterEx(selfpos, targetpos, MASK_NPCSOLID_BRUSHONLY, RayType_EndPoint, traceFilter, client);
+								hTrace = TR_TraceRayFilterEx(selfpos, targetpos, MASK_SHOT, RayType_EndPoint, traceFilter, client);
 								if (!TR_DidHit(hTrace))
 								{
-									// 射线未撞击到物体，则跳出，找到可以被攻击的生还者
+									// 射线未撞击到物体，则跳出，找到可以被攻击的生还者，上面已经判断是生还者，不需要进行二次判断
 									targetclient = newtarget;
-									if (IsValidSurvivor(targetclient))
-									{
-										GetClientAbsOrigin(targetclient, targetpos);
-										delete hTrace;
-										hTrace = INVALID_HANDLE;
-										break;
-									}
+									GetClientAbsOrigin(targetclient, targetpos);
+									delete hTrace;
+									hTrace = INVALID_HANDLE;
+									break;
 								}
 								else
 								{
@@ -569,11 +536,6 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 				// 撞击次数与生还者数不相等，能直视某个生还，则计算角度
 				float absdist[3] = {0.0};
 				GetClientAbsOrigin(client, selfpos);
-				if (targetclient == 0)
-				{
-					// PrintToConsoleAll("[Ai-Tank]：所有生还均被遮挡，随机选取最近生还者");
-					targetclient = GetNearestSurvivor(client);
-				}
 				if (IsValidSurvivor(targetclient))
 				{
 					ComputeAimAngles(client, targetclient, aimangles, AimEye);
@@ -600,8 +562,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 							if (height < 0.0 && height < -100.0)
 							{
 								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，且距离小于1000");
-								aimangles[0] = 0.0;
-								aimangles[0] -= 0.070 * FloatAbs(height);
+								aimangles[0] -= 0.020 * FloatAbs(height);
 							}
 							else if (height < 0.0 && height > -100.0)
 							{
@@ -631,8 +592,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 							if (height < 0.0 && height < -100.0)
 							{
 								// PrintToConsoleAll("[Ai-Tank]：克的位置位于生还下方，且距离大于1000");
-								aimangles[0] = 0.0;
-								aimangles[0] -= 0.070 * FloatAbs(height);
+								aimangles[0] -= 0.030 * FloatAbs(height);
 							}
 							else if (height < 0.0 && height > -100.0)
 							{
@@ -660,19 +620,12 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 		if (DelayExpired(client, 0, TANKMELEESCANDELAY))
 		{
 			DelayStart(client, 0);
-			if (NearestSurvivorDistance(client) < tankattackrange * TANKATTACKRANGEFACTOR)
+			float nearestdist = NearestSurvivorDistancetank(client);
+			if (nearestdist > -1.0 && nearestdist < tankattackrange * TANKATTACKRANGEFACTOR)
 			{
 				buttons |= IN_ATTACK;
 				return Plugin_Changed;
 			}
-		}
-		if (bHasSight && DelayExpired(client, 4, TANKROCKAIMDELAY) && DelayExpired(client, 3, TANKROCKAIMTIME))
-		{
-			float aimangles[3] = {0.0};
-			int nearesttarget = GetNearestSurvivor(client);
-			ComputeAimAngles(client, nearesttarget, aimangles, AimChest);
-			TeleportEntity(client, NULL_VECTOR, aimangles, NULL_VECTOR);
-			return Plugin_Changed;
 		}
 	}
 	return Plugin_Continue;
@@ -715,12 +668,9 @@ public Action OnSpitterRunCmd(int client, int &buttons, float vel[3], float angl
 // *********************
 bool IsValidSurvivor(int client)
 {
-	if (client>0 && client <= MaxClients)
+	if (client > 0 && client <= MaxClients && IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR)
 	{
-		if(IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR)
 		return true;
-		else
-		return false;
 	}
 	else
 	{
@@ -730,7 +680,7 @@ bool IsValidSurvivor(int client)
 
 bool IsInfectedBot(int client)
 {
-	if (client && client <= MaxClients && IsClientInGame(client) && IsFakeClient(client) && GetClientTeam(client) == TEAM_INFECTED)
+	if (client > 0 && client <= MaxClients && IsClientInGame(client) && IsFakeClient(client) && GetClientTeam(client) == TEAM_INFECTED)
 	{
 		return true;
 	}
@@ -834,47 +784,112 @@ void ComputeAimAngles(int client, int target, float angles[3], AimType type = Ai
 	MakeVectorFromPoints(selfpos, targetpos, lookat);
 	GetVectorAngles(lookat, angles);
 }
-
-float NearestSurvivorDistance(int client)
+float NearestSurvivorDistancetank(int client, int SpecificSur = -1)
 {
-	float selfpos[3] = 0.0, mindist = 100000.0;
-	GetClientAbsOrigin(client, selfpos);
-	for (int target = 1; target <= MaxClients; target++)
+	if (client > 0 && client <= MaxClients && IsClientConnected(client) && IsClientInGame(client) && IsPlayerAlive(client) && !IsIncapped(client))
 	{
-		if (IsClientInGame(target) && IsValidSurvivor(target) && IsPlayerAlive(target) && !IsIncapped(target) && !IsPinned(target))
+		int TargetSur = -1;
+		float selfpos[3] = {0.0}, TargetSurPos[3] = {0.0};
+		GetClientAbsOrigin(client, selfpos);
+		if (IsValidSurvivor(SpecificSur))
 		{
-			float targetpos[3] = 0.0;
-			GetClientAbsOrigin(target, targetpos);
-			float dist = GetVectorDistance(selfpos, targetpos, false);
-			if (dist < mindist)
+			TargetSur = SpecificSur;
+		}
+		else
+		{
+			int newtarget = GetNearestSurvivor(client);
+			if (IsValidSurvivor(newtarget))
 			{
-				mindist = dist;
+				TargetSur = newtarget;
 			}
 		}
+		if (TargetSur > 0 && HasEntProp(TargetSur, Prop_Send, "m_vecOrigin"))
+		{
+			GetEntPropVector(TargetSur, Prop_Send, "m_vecOrigin", TargetSurPos);
+			return GetVectorDistance(selfpos, TargetSurPos);
+		}
 	}
-	return mindist;
+	return -1.0;
+}
+float NearestSurvivorDistance(int client, int SpecificSur = -1)
+{
+	if (client > 0 && client <= MaxClients && IsClientConnected(client) && IsClientInGame(client) && IsPlayerAlive(client) && !IsIncapped(client) && !IsPinned(client))
+	{
+		int TargetSur = -1;
+		float selfpos[3] = {0.0}, TargetSurPos[3] = {0.0};
+		GetClientAbsOrigin(client, selfpos);
+		if (IsValidSurvivor(SpecificSur))
+		{
+			TargetSur = SpecificSur;
+		}
+		else
+		{
+			int newtarget = GetNearestSurvivor(client);
+			if (IsValidSurvivor(newtarget))
+			{
+				TargetSur = newtarget;
+			}
+		}
+		if (TargetSur > 0 && HasEntProp(TargetSur, Prop_Send, "m_vecOrigin"))
+		{
+			GetEntPropVector(TargetSur, Prop_Send, "m_vecOrigin", TargetSurPos);
+			return GetVectorDistance(selfpos, TargetSurPos);
+		}
+	}
+	return -1.0;
 }
 
-int GetNearestSurvivor(int client)
+int GetRandomMobileSurvivor()
 {
-	int target = -1;
-	float mindist = 100000.0, selfpos[3] = 0.0, targetpos[3] = 0.0;
-	GetClientAbsOrigin(client, selfpos);
-	for (int count = 1; count <= MaxClients; count++)
+	int survivors[16] = {0}, index = 0;
+	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsValidSurvivor(count) && IsPlayerAlive(count) && !IsIncapped(count) && !IsPinned(count))
+		if (IsClientConnected(client) && IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR && IsPlayerAlive(client) && !IsIncapped(client) && !IsPinned(client))
 		{
-			float dist = 0.0;
-			GetClientAbsOrigin(count, targetpos);
-			dist = GetVectorDistance(selfpos, targetpos, false);
-			if (dist < mindist)
-			{
-				mindist = dist;
-				target = count;
-			}
+			survivors[index] = client;
+			index += 1;
 		}
 	}
-	return target;
+	if (index > 0)
+	{
+		return survivors[GetRandomInt(0, index - 1)];
+	}
+	return 0;
+}
+
+int GetNearestSurvivor(int self, int excludeSur = -1)
+{
+	if (self > 0 && self <= MaxClients && IsClientConnected(self) && IsClientInGame(self) && IsPlayerAlive(self))
+	{
+		float selfpos[3] = {0.0}, surPos[3] = {0.0};
+		GetClientAbsOrigin(self, selfpos);
+		int closetSur = GetRandomMobileSurvivor();
+		if (IsValidSurvivor(closetSur))
+		{
+			GetClientAbsOrigin(closetSur, surPos);
+			int iClosetAbsDisplacement = RoundToNearest(GetVectorDistance(selfpos, surPos));
+			for (int client = 1; client < MaxClients; client++)
+			{
+				if (IsClientConnected(client) && IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR && IsPlayerAlive(client) && !IsIncapped(client) && !IsPinned(client) && client != excludeSur)
+				{
+					GetClientAbsOrigin(client, surPos);
+					int iAbsDisplacement = RoundToNearest(GetVectorDistance(selfpos, surPos));
+					if (iClosetAbsDisplacement < 0)
+					{
+						iClosetAbsDisplacement = iAbsDisplacement;
+						closetSur = client;
+					}
+					else if (iAbsDisplacement < iClosetAbsDisplacement)
+					{
+						iClosetAbsDisplacement = iAbsDisplacement;
+						closetSur = client;
+					}
+				}
+			}
+		}
+		return closetSur;
+	}
+	return 0;
 }
 
 bool IsPinned(int client)

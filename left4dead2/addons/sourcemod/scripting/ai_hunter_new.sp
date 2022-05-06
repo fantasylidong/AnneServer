@@ -44,7 +44,7 @@ public void OnPluginStart()
 {
 	// CreateConVar
 	g_hHunterFastPounceDistance = CreateConVar("ai_HunterFastPounceDistance", "2000", "在距离目标多近Hunter开始快速突袭", FCVAR_NOTIFY, true, 0.0);
-	g_hPounceVerticalAngle = CreateConVar("ai_HunterPounceVerticalAngle", "8", "Hunter突袭的垂直角度限制", FCVAR_NOTIFY, true, 0.0);
+	g_hPounceVerticalAngle = CreateConVar("ai_HunterPounceVerticalAngle", "7", "Hunter突袭的垂直角度限制", FCVAR_NOTIFY, true, 0.0);
 	g_hPounceAngleMean = CreateConVar("ai_HunterPounceAngleMean", "10", "Hunter突袭的平均角度（由随机数发生器产生）", FCVAR_NOTIFY, true, 0.0);
 	g_hPounceAngleStd = CreateConVar("ai_HunterPounceAngleStd", "20", "Hunter突袭角度与平均角度的偏差（由随机数发生器产生）", FCVAR_NOTIFY, true, 0.0);
 	g_hStraightPounceDistance = CreateConVar("ai_HunterStraightPounceDistance", "200.0", "Hunter在离生还者多近时允许直扑", FCVAR_NOTIFY, true, 0.0);

@@ -48,7 +48,7 @@ public Plugin myinfo =
 	name 			= "Ai_Tank_Enhance",
 	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白,东",
 	description 	= "觉得Ai克太弱了？ Try this！",
-	version 		= "2022-4-24",
+	version 		= "2022-5-02",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
@@ -335,7 +335,7 @@ public Action OnPlayerRunCmd(int tank, int &buttons, int &impulse, float vel[3],
 				float fBuffer[3] = {0.0}, fTargetPos[3] = {0.0};
 				GetClientAbsOrigin(iTarget, fTargetPos);
 				fBuffer = UpdatePosition(tank, iTarget, g_fTankBhopSpeed);
-				if (g_fTankAttackRange+65 < iSurvivorDistance < 2000 && fCurrentSpeed > 190.0)
+				if (g_fTankAttackRange+55 < iSurvivorDistance < 2000 && fCurrentSpeed > 190.0)
 				{
 					if (iFlags & FL_ONGROUND)
 					{
@@ -949,6 +949,9 @@ public Action L4D2_OnChooseVictim(int specialInfected, int &curTarget)
 				g_iTreePlayer[specialInfected] = -1;
 			}
 		}
+		else{
+			newtarget = TargetChoose(g_iTankTarget, specialInfected, curTarget);
+		}
 	}
 	return Plugin_Continue;
 }
@@ -1369,7 +1372,7 @@ int GetClosestSurvivor(float refpos[3], int excludeSur = -1)
 	int iClosetAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));
 	for (int client = 1; client < MaxClients; client++)
 	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && client != excludeSur)
+		if (IsSurvivor(client) && IsPlayerAlive(client) && client != excludeSur && !IsIncapped(client))
 		{
 			GetClientAbsOrigin(client, surPos);
 			int iAbsDisplacement = RoundToNearest(GetVectorDistance(refpos, surPos));

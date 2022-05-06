@@ -48,7 +48,7 @@
 	"10"
 	{
 		"type"		"S"
-		"text"		"{LIGHTGREEN}三方图下载地址  https://cloud.189.cn/t/NjqENv6beEvu"
+		"text"		"{LIGHTGREEN}三方图下载地址 https://cloud.06dn.com/s/Rlg9I3?path=%2F"
 	}
 	"11"
 	{

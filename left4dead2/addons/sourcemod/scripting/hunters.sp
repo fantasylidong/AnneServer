@@ -5,7 +5,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <left4dhooks>
-#include <l4d2_saferoom_detect>
+//#include <l4d2_saferoom_detect>
 
 #define CVAR_FLAG FCVAR_NOTIFY
 #define TEAM_SURVIVOR 2
@@ -321,6 +321,7 @@ public void OnGameFrame()
 									addlimit(iZombieClass);
 									print_type(iZombieClass,g_fSpawnDistanceMax);
 								}
+								/*
 								if (SAFEDETECT_IsEntityInEndSaferoom(entityindex))
 								{									
 									//PrintToConsoleAll("[Infected-Spawn]：阳间模式：特感：%N，位置：%.2f，%.2f，%.2f，刷新在终点安全屋内，强制处死", entityindex, fSpawnPos[0], fSpawnPos[1], fSpawnPos[2]);
@@ -329,6 +330,7 @@ public void OnGameFrame()
 									ForcePlayerSuicide(entityindex);
 									return;
 								}
+								*/
 							}
 						}
 					}
@@ -337,6 +339,7 @@ public void OnGameFrame()
 		}
 	}
 }
+/*
 public void dellimit(int iZombieClass){
 	switch (iZombieClass)
 	{
@@ -366,6 +369,7 @@ public void dellimit(int iZombieClass){
 		}
 	}
 }
+*/
 public void ResetInfectedNumber(){
 	int iBoomers = 0, iSmokers = 0, iHunters = 0, iSpitters = 0, iJockeys = 0, iChargers = 0;
 	for (int infected = 0; infected < MaxClients; infected++)

@@ -5,7 +5,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <left4dhooks>
-#include <l4d2_saferoom_detect>
+//#include <l4d2_saferoom_detect>
 
 #define CVAR_FLAG FCVAR_NOTIFY
 #define TEAM_SURVIVOR 2
@@ -298,6 +298,7 @@ public void OnGameFrame()
 									addlimit(iZombieClass);
 									print_type(iZombieClass,g_fSpawnDistanceMax);
 								}
+								/*
 								if (SAFEDETECT_IsEntityInEndSaferoom(entityindex))
 								{									
 									//PrintToConsoleAll("[Infected-Spawn]：阳间模式：特感：%N，位置：%.2f，%.2f，%.2f，刷新在终点安全屋内，强制处死", entityindex, fSpawnPos[0], fSpawnPos[1], fSpawnPos[2]);
@@ -306,6 +307,7 @@ public void OnGameFrame()
 									ForcePlayerSuicide(entityindex);
 									return;
 								}
+								*/
 							}
 						}
 					}
@@ -452,7 +454,7 @@ public void addlimit(int iZombieClass){
 		}
 	}
 }
-
+/*
 public void dellimit(int iZombieClass){
 	switch (iZombieClass)
 	{
@@ -482,6 +484,7 @@ public void dellimit(int iZombieClass){
 		}
 	}
 }
+*/
 
 // 初始 & 动态刷特时钟
 public Action SpawnFirstInfected(Handle timer)
@@ -644,7 +647,7 @@ bool PlayerVisibleTo(float spawnpos[3])
 			g_iSurvivors[g_iSurvivorNum] = i;
 			g_iSurvivorNum++;
 			GetClientEyePosition(i, pos);
-			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 300.0)
+			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 250.0)
 			{
 				return true;
 			}

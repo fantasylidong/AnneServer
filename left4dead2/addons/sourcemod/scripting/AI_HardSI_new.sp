@@ -42,7 +42,7 @@
 // TANK
 #define TANKMELEESCANDELAY 0.0
 #define TANKROCKAIMTIME 3.5
-#define TANKAFTERTHROW 2.0
+#define TANKAFTERTHROW 3.0
 #define TANKROCKAIMDELAY 0.25
 #define TANKATTACKRANGEFACTOR 0.90
 #define TANKTHROWHEIGHT 100.0
@@ -65,7 +65,7 @@ int g_iState[MAXPLAYERS + 1][8];
 // Floats
 float g_fPlayBackRate, g_fDelay[MAXPLAYERS + 1][8], g_fMoveGrad[MAXPLAYERS + 1][3], g_fMoveSpeed[MAXPLAYERS + 1], g_fPos[MAXPLAYERS + 1][3];
 // Bools
-bool g_bAiEnable[MAXPLAYERS + 1], g_bTankDelay[MAXPLAYERS + 1] = false;
+bool g_bAiEnable[MAXPLAYERS + 1];
 
 public Plugin myinfo = 
 {
@@ -144,14 +144,16 @@ public void evt_TankSpawn(Event event, const char[] name, bool dontBroadcast)
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (IsInfectedBot(client) && IsPlayerAlive(client) && GetEntProp(client, Prop_Send, "m_zombieClass") == ZC_TANK)
 	{
-		g_bTankDelay[client] = false;
 		SDKHook(client, SDKHook_PostThinkPost, UpdateThink);
 	}
 }
 
 public void L4D_TankClaw_DoSwing_Pre(int tank, int claw)
 {
-	SetConVarString(FindConVar("z_tank_throw_force"), "500");
+	if (IsInfectedBot(tank) && IsPlayerAlive(tank) && GetEntProp(tank, Prop_Send, "m_zombieClass") == ZC_TANK)
+	{
+		SetConVarString(FindConVar("z_tank_throw_force"), "500");
+	}
 }
 
 // 修正玩家速度
@@ -426,24 +428,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 		{
 			DelayStart(client, 3);
 			DelayStart(client, 4);
-			g_bTankDelay[client] = false;
 			SetConVarString(FindConVar("z_tank_throw_force"), "1000");
-		}
-		// 0.25 + 2.5s 后，坦克可能继续锁定视角在扔石头位置，则继续锁定 5s 在最近生还身上
-		if (DelayExpired(client, 3, TANKROCKAIMTIME) && !g_bTankDelay[client])
-		{
-			DelayStart(client, 5);
-			g_bTankDelay[client] = true;
-		}
-		if (!DelayExpired(client, 5, TANKAFTERTHROW))
-		{
-			float aimangles[3] = {0.0};
-			int nearesttarget = GetNearestSurvivor(client);
-			if (IsValidSurvivor(nearesttarget))
-			{
-				ComputeAimAngles(client, nearesttarget, aimangles, AimChest);
-				TeleportEntity(client, NULL_VECTOR, aimangles, NULL_VECTOR);
-			}
 		}
 		// 按了右键之后 0.25s 并在 0.25 + 2.5s内，锁定视野
 		if (DelayExpired(client, 4, TANKROCKAIMDELAY) && !DelayExpired(client, 3, TANKROCKAIMTIME))
@@ -462,7 +447,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 					survivorcount += 1;
 				}
 			}
-			int firsttarget = GetNearestSurvivor(client);
+			int firsttarget = GetNearestSurvivorTank(client);
 			if (IsValidSurvivor(firsttarget))
 			{
 				GetClientAbsOrigin(firsttarget, targetpos);
@@ -523,7 +508,7 @@ public Action OnTankRunCmd(int client, int &buttons, float vel[3], float angles[
 			if (hittimes == survivorcount)
 			{
 				// PrintToConsoleAll("[Ai-Tank]：所有生还者均被遮挡，锁定目标于最近生还者身上");
-				int nearesttarget = GetNearestSurvivor(client);
+				int nearesttarget = GetNearestSurvivorTank(client);
 				if (IsValidSurvivor(nearesttarget))
 				{
 					ComputeAimAngles(client, nearesttarget, aimangles, AimChest);
@@ -753,6 +738,7 @@ float GetMoveSpeed(int client)
 }
 
 
+
 bool IsIncapped(int client)
 {
     return view_as<bool>(GetEntProp(client, Prop_Send, "m_isIncapacitated"));
@@ -803,7 +789,7 @@ float NearestSurvivorDistancetank(int client, int SpecificSur = -1)
 				TargetSur = newtarget;
 			}
 		}
-		if (TargetSur > 0 && HasEntProp(TargetSur, Prop_Send, "m_vecOrigin"))
+		if (IsValidSurvivor(TargetSur) && HasEntProp(TargetSur, Prop_Send, "m_vecOrigin"))
 		{
 			GetEntPropVector(TargetSur, Prop_Send, "m_vecOrigin", TargetSurPos);
 			return GetVectorDistance(selfpos, TargetSurPos);
@@ -830,13 +816,31 @@ float NearestSurvivorDistance(int client, int SpecificSur = -1)
 				TargetSur = newtarget;
 			}
 		}
-		if (TargetSur > 0 && HasEntProp(TargetSur, Prop_Send, "m_vecOrigin"))
+		if (IsValidSurvivor(TargetSur) && HasEntProp(TargetSur, Prop_Send, "m_vecOrigin"))
 		{
 			GetEntPropVector(TargetSur, Prop_Send, "m_vecOrigin", TargetSurPos);
 			return GetVectorDistance(selfpos, TargetSurPos);
 		}
 	}
 	return -1.0;
+}
+
+int GetRandomMobileSurvivorTank()
+{
+	int survivors[16] = {0}, index = 0;
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientConnected(client) && IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR && IsPlayerAlive(client) && !IsIncapped(client))
+		{
+			survivors[index] = client;
+			index += 1;
+		}
+	}
+	if (index > 0)
+	{
+		return survivors[GetRandomInt(0, index - 1)];
+	}
+	return 0;
 }
 
 int GetRandomMobileSurvivor()
@@ -853,6 +857,41 @@ int GetRandomMobileSurvivor()
 	if (index > 0)
 	{
 		return survivors[GetRandomInt(0, index - 1)];
+	}
+	return 0;
+}
+
+int GetNearestSurvivorTank(int self, int excludeSur = -1)
+{
+	if (self > 0 && self <= MaxClients && IsClientConnected(self) && IsClientInGame(self) && IsPlayerAlive(self))
+	{
+		float selfpos[3] = {0.0}, surPos[3] = {0.0};
+		GetClientAbsOrigin(self, selfpos);
+		int closetSur = GetRandomMobileSurvivorTank();
+		if (IsValidSurvivor(closetSur))
+		{
+			GetClientAbsOrigin(closetSur, surPos);
+			int iClosetAbsDisplacement = RoundToNearest(GetVectorDistance(selfpos, surPos));
+			for (int client = 1; client < MaxClients; client++)
+			{
+				if (IsClientConnected(client) && IsClientInGame(client) && GetClientTeam(client) == TEAM_SURVIVOR && IsPlayerAlive(client) && !IsIncapped(client)  && client != excludeSur)
+				{
+					GetClientAbsOrigin(client, surPos);
+					int iAbsDisplacement = RoundToNearest(GetVectorDistance(selfpos, surPos));
+					if (iClosetAbsDisplacement < 0)
+					{
+						iClosetAbsDisplacement = iAbsDisplacement;
+						closetSur = client;
+					}
+					else if (iAbsDisplacement < iClosetAbsDisplacement)
+					{
+						iClosetAbsDisplacement = iAbsDisplacement;
+						closetSur = client;
+					}
+				}
+			}
+		}
+		return closetSur;
 	}
 	return 0;
 }

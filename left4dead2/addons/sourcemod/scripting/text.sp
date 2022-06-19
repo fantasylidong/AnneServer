@@ -4,7 +4,7 @@
 #include <sdkhooks>
 #include <left4dhooks>
 //#include <smlib>
-#define PLUGIN_VERSION	"2022-04-15"
+#define PLUGIN_VERSION	"2022-06"
 new Handle: g_hCvarInfectedTime = INVALID_HANDLE;
 new Handle: g_hCvarInfectedLimit = INVALID_HANDLE;
 new Handle: g_hCvarTankBhop = INVALID_HANDLE;
@@ -20,8 +20,8 @@ public OnPluginStart()
 {
 	g_hCvarInfectedTime = FindConVar("versus_special_respawn_interval");
 	g_hCvarInfectedLimit = FindConVar("l4d_infected_limit");
-	g_hCvarTankBhop = FindConVar("ReturnBlood");
-	g_hCvarWeapon = FindConVar("ZonemodWeapon");
+	g_hCvarTankBhop = FindConVar("ai_Tank_Bhop");
+	g_hCvarWeapon = CreateConVar("ZonemodWeapon", "0", "", 0, false, 0.0, false, 0.0);
 	HookConVarChange(g_hCvarInfectedTime, Cvar_InfectedTime);
 	HookConVarChange(g_hCvarInfectedLimit, Cvar_InfectedLimit);
 	HookConVarChange(g_hCvarTankBhop, CvarTankBhop);
@@ -90,6 +90,14 @@ public CvarTankBhop( Handle:cvar, const String:oldValue[], const String:newValue
 public CvarWeapon( Handle:cvar, const String:oldValue[], const String:newValue[] ) 
 {
 	Weapon = GetConVarInt(g_hCvarWeapon);
+	if (Weapon>0)
+	{
+		ServerCommand("exec vote/weapon/zonedmod.cfg");
+	}
+	else
+	{
+		ServerCommand("exec vote/weapon/AnneHappy.cfg");
+	}
 }
 public Action:InfectedStatus(Client, args)
 { 
@@ -98,24 +106,28 @@ public Action:InfectedStatus(Client, args)
 	{
 		if( Weapon > 0)
 		{
-			PrintToChatAll("\x03武器\x05[\x04Zone\x05] \x03回血\x05[\x04开启\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04开启\x05] \x03武器\x05[\x04Zone\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 		else
 		{
-			PrintToChatAll("\x03武器\x05[\x04Anne\x05] \x03回血\x05[\x04开启\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04开启\x05] \x03武器\x05[\x04Anne\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 	}
 	else
 	{
 		if( Weapon > 0)
 		{
-			PrintToChatAll("\x03武器\x05[\x04Zone\x05] \x03回血\x05[\x04关闭\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04关闭\x05] \x03武器\x05[\x04Zone\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 		else
 		{
-			PrintToChatAll("\x03武器\x05[\x04Anne\x05] \x03回血\x05[\x04关闭\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04关闭\x05] \x03武器\x05[\x04Anne\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 	}
+	if(GetConVarInt(FindConVar("ReturnBlood"))>0)
+		PrintToChatAll("\x03回血\x05[\x04开启\x05]");
+	if(GetConVarInt(FindConVar("ai_TankConsume"))>0)
+			PrintToChatAll("\x03坦克消耗\x05[\x04开启\x05]");
 	return Plugin_Handled;
 }
 public event_RoundStart(Handle:event, const String:name[], bool:dontBroadcast)
@@ -125,24 +137,28 @@ public event_RoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 	{
 		if( Weapon > 0)
 		{
-			PrintToChatAll("\x03武器\x05[\x04Zone\x05] \x03回血\x05[\x04开启\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04开启\x05] \x03武器\x05[\x04Zone\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 		else
 		{
-			PrintToChatAll("\x03武器\x05[\x04Anne\x05] \x03回血\x05[\x04开启\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04开启\x05] \x03武器\x05[\x04Anne\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 	}
 	else
 	{
 		if( Weapon > 0)
 		{
-			PrintToChatAll("\x03武器\x05[\x04Zone\x05] \x03回血\x05[\x04关闭\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04关闭\x05] \x03武器\x05[\x04Zone\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 		else
 		{
-			PrintToChatAll("\x03武器\x05[\x04Anne\x05] \x03回血\x05[\x04关闭\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+			PrintToChatAll("\x03Tank连跳\x05[\x04关闭\x05]\x03武器\x05[\x04Anne\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 		}
 	}
+	if(GetConVarInt(FindConVar("ReturnBlood"))>0)
+		PrintToChatAll("\x03回血\x05[\x04开启\x05]");
+	if(GetConVarInt(FindConVar("ai_TankConsume"))>0)
+		PrintToChatAll("\x03坦克消耗\x05[\x04开启\x05]");
 }
 public OnClientPutInServer(Client)
 {
@@ -159,25 +175,28 @@ public OnClientPutInServer(Client)
 		{
 			if( Weapon > 0)
 			{
-				
-				PrintToChat(Client,"\x03武器\x05[\x04Zone\x05] \x03回血\x05[\x04开启\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+				PrintToChatAll("\x03Tank连跳\x05[\x04开启\x05] \x03武器\x05[\x04Zone\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 			}
 			else
 			{
-				PrintToChat(Client,"\x03武器\x05[\x04Anne\x05] \x03回血\x05[\x04开启\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+				PrintToChatAll("\x03Tank连跳\x05[\x04开启\x05] \x03武器\x05[\x04Anne\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 			}
 		}
 		else
 		{
 			if( Weapon > 0)
 			{
-				PrintToChat(Client,"\x03武器\x05[\x04Zone\x05] \x03回血\x05[\x04关闭\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+				PrintToChatAll("\x03Tank连跳\x05[\x04关闭\x05] \x03武器\x05[\x04Zone\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 			}
 			else
 			{
-				PrintToChat(Client,"\x03武器\x05[\x04Anne\x05] \x03回血\x05[\x04关闭\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03测试服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
+				PrintToChatAll("\x03Tank连跳\x05[\x04关闭\x05]\x03武器\x05[\x04Anne\x05] \x03特感\x05[\x04%i特%i秒\x05] \x03电信服\x05[\x04%s\x05]",CommonLimit,CommonTime,PLUGIN_VERSION);
 			}
 		}
+		if(GetConVarInt(FindConVar("ReturnBlood"))>0)
+			PrintToChatAll("\x03回血\x05[\x04开启\x05]");
+		if(GetConVarInt(FindConVar("ai_TankConsume"))>0)
+			PrintToChatAll("\x03坦克消耗\x05[\x04开启\x05]");
 	}
 }
 stock bool:IsValidPlayer(Client, bool:AllowBot = true, bool:AllowDeath = true)

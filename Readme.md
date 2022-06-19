@@ -14,8 +14,6 @@
 
 ####  Hunter与Jockey的空中速度 900改为700（默认）
 
-####  Spitter连跳移除，可推，推后Spitter痰无伤
-
 ####  大幅度增加枪械的备弹，无需频繁购买子弹
 
 ####  l4d_info_editor转用l4d2_weapon_attributes代替

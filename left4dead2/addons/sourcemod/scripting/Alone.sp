@@ -24,7 +24,7 @@ public Plugin myinfo =
 	name 			= "Direct InfectedSpawn",
 	author 			= "Caibiii, 夜羽真白，东",
 	description 	= "特感刷新控制，传送落后特感",
-	version 		= "2022.04.24",
+	version 		= "2022.07.01",
 	url 			= "https://github.com/Caibiii/AnneServer"
 }
 
@@ -301,7 +301,7 @@ public void OnGameFrame()
 						}
 					}
 				}
-				if (count2<=20)
+				if (count2 <= 20)
 				{
 					//Debug_Print("生还者看不到");
 					// 生还数量为 4，循环 4 次，检测此位置到生还的距离是否小于 750 是则刷特，此处可以刷新 1 ~ g_iSiLimit 只特感，如果此处刷完，则上面的 SpawnSpecial 将不再刷特
@@ -531,7 +531,7 @@ public Action SpawnFirstInfected(Handle timer)
 		}
 		if (g_bTeleportSi)
 		{
-			g_hTeleHandle = CreateTimer(0.1, Timer_PositionSi, _, TIMER_REPEAT);
+			g_hTeleHandle = CreateTimer(1.0, Timer_PositionSi, _, TIMER_REPEAT);
 		}
 	}
 	return Plugin_Continue;
@@ -803,7 +803,7 @@ bool CanBeTeleport(int client)
 	}
 }
 
-//3秒内以0.1s检测一次，49次没被看到，就可以传送了
+//3秒内以1s检测一次，4次没被看到，就可以传送了
 public Action Timer_PositionSi(Handle timer)
 {
 	for (int client = 1; client <= MaxClients; client++)
@@ -813,7 +813,7 @@ public Action Timer_PositionSi(Handle timer)
 			GetClientEyePosition(client, fSelfPos);
 			if (!PlayerVisibleTo(fSelfPos))
 			{
-				if (g_iTeleCount[client] > 29)
+				if (g_iTeleCount[client] > 4)
 				{
 					Debug_Print("%N开始传送",client);
 					if (!PlayerVisibleTo(fSelfPos) && !IsPinningSomeone(client))
@@ -848,44 +848,19 @@ bool IsSpitter(int client)
 
 int HasAnyCountFull()
 {
-	int  iSurvivors[4] = {0}, iSurvivorIndex = 0, FurthestAlivePlayer=0;
+	int  iSurvivors[4] = {0}, iSurvivorIndex = 0;
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client) && !L4D_IsPlayerIncapacitated(client))
 		{
 			g_bIsLate = true;
-			if (iSurvivorIndex < 4)
-			{
-				if(FurthestAlivePlayer==0)
-					FurthestAlivePlayer=client;
-				else if(L4D2Direct_GetFlowDistance(client)>L4D2Direct_GetFlowDistance(FurthestAlivePlayer))
-					FurthestAlivePlayer=client;
-				iSurvivors[iSurvivorIndex] = client;
-				iSurvivorIndex += 1;
-			}
+			iSurvivors[iSurvivorIndex] = client;
+			iSurvivorIndex += 1;
 		}
 	}
 	if (iSurvivorIndex > 0)
 	{
 		g_iTargetSurvivor = iSurvivors[GetRandomInt(0, iSurvivorIndex - 1)];
-	}
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsValidSurvivor(client) && IsPlayerAlive(client))
-		{
-			if(client == FurthestAlivePlayer)
-				continue;
-			if(FurthestAlivePlayer == 0)
-				break;
-			float abs[3],abs2[3];
-			GetClientAbsOrigin(client,abs);
-			GetClientAbsOrigin(FurthestAlivePlayer,abs2);
-			if(GetVectorDistance(abs,abs2) > 1500.0)
-			{
-				g_iTargetSurvivor = FurthestAlivePlayer;
-				break;
-			}
-		}
 	}
 	return iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit;
 }
@@ -969,7 +944,7 @@ void HardTeleMode(int client)
 			while (PlayerVisibleTo(fSpawnPos) || !IsOnValidMesh(fSpawnPos) || IsPlayerStuck(fSpawnPos))
 			{
 				count2 ++;
-				if(count2 > 50)
+				if(count2 > 20)
 				{
 					break;
 				}
@@ -998,7 +973,7 @@ void HardTeleMode(int client)
 					}
 				}
 			}
-			if (count2<=50)
+			if (count2<= 20)
 			{
 				for (int count = 0; count < g_iSurvivorNum; count++)
 				{
@@ -1011,6 +986,14 @@ void HardTeleMode(int client)
 						{
 							TeleportEntity(client, fSpawnPos, NULL_VECTOR, NULL_VECTOR);
 							SDKUnhook(client, SDKHook_PostThinkPost, SDK_UpdateThink);
+							//解决smoker传送后悬空的问题
+							if(IsAiSmoker(client))
+							{
+								SetConVarInt(FindConVar("tongue_range"),9999);
+								BlockSmokerTongue(client);
+								CreateTimer(0.5,ResetTougueRange);
+							}
+							return;
 						}
 					}
 				}
@@ -1018,6 +1001,35 @@ void HardTeleMode(int client)
 		}
 	}
 }
+
+// 阻止舌头拉
+void BlockSmokerTongue(int client)
+{
+	int ability = GetEntPropEnt(client, Prop_Send, "m_customAbility");
+	if (IsValidEntity(ability))
+	{
+			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.5);
+	}
+}
+
+public Action ResetTougueRange(Handle timer,int client) 
+{
+	SetConVarInt(FindConVar("tongue_range"),750);
+}
+
+stock bool IsAiSmoker(int client)
+{
+	if (client && client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client) && IsFakeClient(client) && GetClientTeam(client) == TEAM_INFECTED && GetEntProp(client, Prop_Send, "m_zombieClass") == 1 && GetEntProp(client, Prop_Send, "m_isGhost") != 1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
 stock bool IsGhost(int client)
 {
     return (IsValidClient(client) && view_as<bool>(GetEntProp(client, Prop_Send, "m_isGhost")));

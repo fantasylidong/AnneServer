@@ -24,7 +24,7 @@ public Plugin myinfo =
 	name 			= "Direct InfectedSpawn",
 	author 			= "Caibiii, 夜羽真白，东",
 	description 	= "特感刷新控制，传送落后特感",
-	version 		= "2022.04.24",
+	version 		= "2022.07.1",
 	url 			= "https://github.com/Caibiii/AnneServer"
 }
 
@@ -506,7 +506,7 @@ public Action SpawnFirstInfected(Handle timer)
 		}
 		if (g_bTeleportSi)
 		{
-			g_hTeleHandle = CreateTimer(0.1, Timer_PositionSi, _, TIMER_REPEAT);
+			g_hTeleHandle = CreateTimer(1.0, Timer_PositionSi, _, TIMER_REPEAT);
 		}
 	}
 	return Plugin_Continue;
@@ -565,10 +565,10 @@ public Action SpawnNewInfected(Handle timer)
 		}
 			
 		// 当一定时间内刷不出特感，触发时钟使 g_iSpawnMaxCount 超过 g_iSiLimit 值时，最多允许刷出 g_iSiLimit + 2 只特感，防止连续刷 2-3 波的情况
-		if (g_iSiLimit < g_iSpawnMaxCount)
+		if (g_iSiLimit+2 < g_iSpawnMaxCount)
 		{
 
-			g_iSpawnMaxCount = g_iSiLimit;
+			g_iSpawnMaxCount = g_iSiLimit+2;
 			
 			Debug_Print("当前特感数量达到上限");
 		}
@@ -642,7 +642,7 @@ bool PlayerVisibleTo(float spawnpos[3])
 	g_iSurvivorNum = 0;
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		if(IsValidSurvivor(i) && IsPlayerAlive(i))
+		if(IsValidSurvivor(i) && IsPlayerAlive(i) )
 		{
 			g_iSurvivors[g_iSurvivorNum] = i;
 			g_iSurvivorNum++;
@@ -663,7 +663,7 @@ bool TeleportPlayerVisibleTo(float spawnpos[3])
 	g_iSurvivorNum = 0;
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		if(IsValidSurvivor(i) && IsPlayerAlive(i))
+		if(IsValidSurvivor(i) && IsPlayerAlive(i) && !IsClientIncapped(i))
 		{
 			g_iSurvivors[g_iSurvivorNum] = i;
 			g_iSurvivorNum++;
@@ -676,6 +676,34 @@ bool TeleportPlayerVisibleTo(float spawnpos[3])
 	}
 	return false;
 }
+
+/*
+//获取没倒底的最远生还者流程
+float GetFurthestUncappedSurvivorFlow(){
+	float HighestFlow = 0.0;
+	for(int i = 1;i< = MaxClients; i++)
+		if(IsValidSurvivor(i))
+			if(!L4D_IsPlayerIncapacitated(i) || !L4D_IsPlayerPinned(i)){
+				float tmp = L4D2Direct_GetFlowDistance(i);
+				if(tmp > HighestFlow)
+					HighestFlow = tmp;
+		}
+	return HighestFlow;
+}*/
+
+// 判断玩家是否倒地，倒地返回 true，未倒地返回 false
+stock bool IsClientIncapped(int client)
+{
+	if (IsValidClient(client))
+	{
+		return view_as<bool>(GetEntProp(client, Prop_Send, "m_isIncapacitated"));
+	}
+	else
+	{
+		return false;
+	}
+}
+
 
 //判断从该坐标发射的射线是否击中目标
 bool PosIsVisibleTo(int client, const float targetposition[3])
@@ -799,7 +827,7 @@ bool CanBeTeleport(int client)
 	}
 }
 
-//5秒内以0.1s检测一次，49次没被看到，就可以传送了
+//5秒内以1s检测一次，5次没被看到，就可以传送了
 public Action Timer_PositionSi(Handle timer)
 {
 	for (int client = 1; client <= MaxClients; client++)
@@ -807,12 +835,12 @@ public Action Timer_PositionSi(Handle timer)
 		if(CanBeTeleport(client)){
 			float fSelfPos[3] = {0.0};
 			GetClientEyePosition(client, fSelfPos);
-			if (!PlayerVisibleTo(fSelfPos))
+			if (!TeleportPlayerVisibleTo(fSelfPos))
 			{
-				if (g_iTeleCount[client] > 49)
+				if (g_iTeleCount[client] > 10)
 				{
 					Debug_Print("%N开始传送",client);
-					if (!PlayerVisibleTo(fSelfPos) && !IsPinningSomeone(client))
+					if (!TeleportPlayerVisibleTo(fSelfPos) && !IsPinningSomeone(client))
 					{
 						SDKHook(client, SDKHook_PostThinkPost, SDK_UpdateThink);
 						g_iTeleCount[client] = 0;
@@ -850,40 +878,37 @@ int HasAnyCountFull()
 		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client) && !L4D_IsPlayerIncapacitated(client))
 		{
 			g_bIsLate = true;
-			if (iSurvivorIndex < 4)
-			{
-				if(FurthestAlivePlayer==0)
-					FurthestAlivePlayer=client;
-				else if(L4D2Direct_GetFlowDistance(client)>L4D2Direct_GetFlowDistance(FurthestAlivePlayer))
-					FurthestAlivePlayer=client;
-				iSurvivors[iSurvivorIndex] = client;
-				iSurvivorIndex += 1;
-			}
+			if(FurthestAlivePlayer == 0)
+				FurthestAlivePlayer=client;
+			else if(L4D2Direct_GetFlowDistance(client) > L4D2Direct_GetFlowDistance(FurthestAlivePlayer))
+				FurthestAlivePlayer = client;
+			iSurvivors[iSurvivorIndex] = client;
+			iSurvivorIndex += 1;
 		}
 	}
 	if (iSurvivorIndex > 0)
 	{
+		for (int index = 0; index < iSurvivorIndex; index++)
+		{
+			if (IsValidSurvivor(iSurvivors[index]) && IsValidSurvivor(FurthestAlivePlayer) && IsPlayerAlive(iSurvivors[index]) && !IsPinned(iSurvivors[index]) && !L4D_IsPlayerIncapacitated(iSurvivors[index] ))
+			{
+				if(iSurvivors[index] == FurthestAlivePlayer)
+						continue;
+					
+				float abs[3],abs2[3];
+				GetClientAbsOrigin(iSurvivors[index], abs);
+				GetClientAbsOrigin(FurthestAlivePlayer, abs2);
+				if(GetVectorDistance(abs,abs2)> 1200.0)
+				{
+					g_iTargetSurvivor =FurthestAlivePlayer;
+					return iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit;
+				}
+			}
+				
+		}
 		g_iTargetSurvivor = iSurvivors[GetRandomInt(0, iSurvivorIndex - 1)];
 	}
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsValidSurvivor(client) && IsPlayerAlive(client))
-		{
-			if(client == FurthestAlivePlayer)
-				continue;
-			if(FurthestAlivePlayer == 0)
-				break;
-			float abs[3],abs2[3];
-			GetClientAbsOrigin(client,abs);
-			GetClientAbsOrigin(FurthestAlivePlayer,abs2);
-			if(GetVectorDistance(abs,abs2) > 1500.0)
-			{
-				g_iTargetSurvivor = FurthestAlivePlayer;
-				break;
-			}
-		}
-	}
-	return iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit;
+	return iHunterLimit + iSmokerLimit + iBoomerLimit + iSpitterLimit + iJockeyLimit + iChargerLimit;
 }
 /*
 int HasAnyCountFull()
@@ -964,7 +989,7 @@ void HardTeleMode(int client)
 			while (TeleportPlayerVisibleTo(fSpawnPos) || !IsOnValidMesh(fSpawnPos) || IsPlayerStuck(fSpawnPos))
 			{
 				count2 ++;
-				if(count2 > 50)
+				if(count2 > 20)
 				{
 					break;
 				}
@@ -993,7 +1018,7 @@ void HardTeleMode(int client)
 					}
 				}
 			}
-			if (count2<=50)
+			if (count2<= 20)
 			{
 				for (int count = 0; count < g_iSurvivorNum; count++)
 				{
@@ -1006,6 +1031,14 @@ void HardTeleMode(int client)
 						{
 							TeleportEntity(client, fSpawnPos, NULL_VECTOR, NULL_VECTOR);
 							SDKUnhook(client, SDKHook_PostThinkPost, SDK_UpdateThink);
+							//解决smoker传送后悬空的问题
+							if(IsAiSmoker(client))
+							{
+								SetConVarInt(FindConVar("tongue_range"),9999);
+								BlockSmokerTongue(client);
+								CreateTimer(0.5,ResetTougueRange);
+							}
+							return;
 						}
 					}
 				}
@@ -1013,6 +1046,35 @@ void HardTeleMode(int client)
 		}
 	}
 }
+
+// 阻止舌头拉
+void BlockSmokerTongue(int client)
+{
+	int ability = GetEntPropEnt(client, Prop_Send, "m_customAbility");
+	if (IsValidEntity(ability))
+	{
+			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.5);
+	}
+}
+
+
+public Action ResetTougueRange(Handle timer,int client) 
+{
+	SetConVarInt(FindConVar("tongue_range"),750);
+}
+
+stock bool IsAiSmoker(int client)
+{
+	if (client && client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client) && IsFakeClient(client) && GetClientTeam(client) == TEAM_INFECTED && GetEntProp(client, Prop_Send, "m_zombieClass") == 1 && GetEntProp(client, Prop_Send, "m_isGhost") != 1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 stock bool IsGhost(int client)
 {
     return (IsValidClient(client) && view_as<bool>(GetEntProp(client, Prop_Send, "m_isGhost")));
@@ -1065,8 +1127,11 @@ int IsBotTypeNeeded()
 	{
 		if ((iBoomerLimit < GetConVarInt(FindConVar("z_boomer_limit"))))
 		{
+			if(g_iSpawnMaxCount>=4)
+				IsBotTypeNeeded();
+			else
 	//		iBoomerLimit++;
-			return 2;
+				return 2;
 		}
 		else
 		{
@@ -1089,7 +1154,7 @@ int IsBotTypeNeeded()
 	{
 		if ((iSpitterLimit < GetConVarInt(FindConVar("z_spitter_limit"))))
 		{
-			if(g_iSpawnMaxCount>4)
+			if(g_iSpawnMaxCount>=4)
 				IsBotTypeNeeded();
 			else 
 				{

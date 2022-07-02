@@ -18,7 +18,7 @@ public Plugin myinfo =
 	name 			= "Ai_Jockey增强",
 	author 			= "Breezy，High Cookie，Standalone，Newteee，cravenge，Harry，Sorallll，PaimonQwQ，夜羽真白",
 	description 	= "觉得Ai猴子太弱了？ Try this！",
-	version 		= "2022-4-24",
+	version 		= "2022/5/2",
 	url 			= "https://steamcommunity.com/id/saku_ra/"
 }
 
@@ -27,7 +27,7 @@ ConVar g_hBhopSpeed, g_hStartHopDistance, g_hJockeyStumbleRadius;
 // Ints
 int g_iStartHopDistance, g_iState[MAXPLAYERS + 1][8], g_iJockeyStumbleRadius;
 // Float
-float g_fJockeyBhopSpeed;
+float g_fJockeyBhopSpeed, g_fShovedTime[MAXPLAYERS + 1] = {0.0};
 // Bools
 bool g_bHasBeenShoved[MAXPLAYERS + 1], g_bCanLeap[MAXPLAYERS + 1];
 
@@ -70,108 +70,75 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 {
 	if (IsAiJockey(jockey))
 	{
-		static float fLeftGroundMaxSpeed[MAXPLAYERS + 1];
-		float fSpeed[3], fCurrentSpeed, fJockeyPos[3];
+		float fSpeed[3] = {0.0}, fCurrentSpeed, fJockeyPos[3] = {0.0};
 		GetEntPropVector(jockey, Prop_Data, "m_vecVelocity", fSpeed);
 		fCurrentSpeed = SquareRoot(Pow(fSpeed[0], 2.0) + Pow(fSpeed[1], 2.0));
 		GetClientAbsOrigin(jockey, fJockeyPos);
 		// 获取jockey状态
-		int iFlags = GetEntityFlags(jockey);
-		// 获取jockey与目标之间的向量
-		int iTarget = GetClientAimTarget(jockey, true);
-		if (IsSurvivor(iTarget) && IsPlayerAlive(iTarget))
+		int iFlags = GetEntityFlags(jockey), iTarget = GetClientAimTarget(jockey, true);
+		bool bHasSight = view_as<bool>(GetEntProp(jockey, Prop_Send, "m_hasVisibleThreats"));
+		if (IsSurvivor(iTarget) && IsPlayerAlive(iTarget) && bHasSight && !g_bHasBeenShoved[jockey])
 		{
 			// 其他操作
-			float fBuffer[3], fTargetPos[3], fTargetAngles[3];
+			float fBuffer[3] = {0.0}, fTargetPos[3] = {0.0}, fDistance = NearestSurvivorDistance(jockey);
 			GetClientAbsOrigin(iTarget, fTargetPos);
 			fBuffer = UpdatePosition(jockey, iTarget, g_fJockeyBhopSpeed);
-			if (iFlags == FL_JUMPING && fLeftGroundMaxSpeed[jockey] == -1.0)
+			if (fCurrentSpeed > 130.0 && fDistance < float(g_iStartHopDistance))
 			{
-				fLeftGroundMaxSpeed[jockey] = GetEntPropFloat(jockey, Prop_Data, "m_flMaxspeed");
-			}
-			if (GetEntProp(jockey, Prop_Send, "m_hasVisibleThreats") == 0 || g_bHasBeenShoved[jockey])
-			{
-				return Plugin_Continue;
-			}
-			float fDistance = NearestSurvivorDistance(jockey);
-			if (fCurrentSpeed > 130.0)
-			{
-				// 距离目标距离小于给定距离
-				if (fDistance < float(g_iStartHopDistance))
+				if (iFlags & FL_ONGROUND)
 				{
-					if (iFlags & FL_ONGROUND)
+					if (fDistance < 250.0)
 					{
-						if (fDistance < 250.0)
+						// 在地上的情况，首先 GetState 如果状态不是跳跃状态，则按跳跃键，设置为跳跃状态，如果在地上且是跳跃状态，且目标正在看着 jockey，则向上 50 度抬起视野再攻击，设置状态为攻击
+						if (GetState(jockey, 0) == IN_JUMP)
 						{
-							if (fLeftGroundMaxSpeed[jockey] != -1.0 && fCurrentSpeed > 250.0)
+							bool bIsWatchingJockey = IsTargetWatchingAttacker(jockey, 20);
+							if (angles[2] == 0.0 && bIsWatchingJockey)
 							{
-								float fCurrentSpeedVector[3];
-								GetEntPropVector(jockey, Prop_Data, "m_vecAbsVelocity", fCurrentSpeedVector);
-								if (GetVectorLength(fCurrentSpeedVector) > fLeftGroundMaxSpeed[jockey])
-								{
-									NormalizeVector(fCurrentSpeedVector, fCurrentSpeedVector);
-									ScaleVector(fCurrentSpeedVector, fLeftGroundMaxSpeed[jockey]);
-									TeleportEntity(jockey, NULL_VECTOR, NULL_VECTOR, fCurrentSpeedVector);
-								}
-								fLeftGroundMaxSpeed[jockey] = -1.0;
+								angles = angles;
+								angles[0] = GetRandomFloat(-50.0, -10.0);
+								TeleportEntity(jockey, NULL_VECTOR, angles, NULL_VECTOR);
 							}
-							if (GetState(jockey, 0) == IN_JUMP)
-							{
-								bool bIsWatchingJockey = IsTargetWatchingAttacker(jockey, 20);
-								// 如果在地上且目标正在看着jockey
-								if (angles[2] == 0.0 && bIsWatchingJockey)
-								{
-									angles = angles;
-									angles[0] = GetRandomFloat(-30.0, -10.0);
-									TeleportEntity(jockey, NULL_VECTOR, angles, NULL_VECTOR);
-								}
-								buttons |= IN_ATTACK;
-								buttons |= IN_ATTACK2;
-								SetState(jockey, 0, IN_ATTACK);
-							}
-							else
-							{
-								if(angles[2] == 0.0) 
-								{
-									angles[0] = GetRandomFloat(-10.0, 0.0);
-									TeleportEntity(jockey, NULL_VECTOR, angles, NULL_VECTOR);
-								}
-								buttons |= IN_JUMP;
-								switch (GetRandomInt(0, 2))
-								{
-									case 0:
-									{
-										buttons |= IN_DUCK;
-									}
-									case 1:
-									{
-										buttons |= IN_ATTACK2;
-									}
-								}
-								SetState(jockey, 0, IN_JUMP);
-							}
+							buttons |= IN_ATTACK;
+							SetState(jockey, 0, IN_ATTACK);
 						}
 						else
 						{
-							buttons |= IN_JUMP;
-							buttons |= IN_ATTACK2;
-							SetState(jockey, 0, IN_JUMP);
-							if ((buttons & IN_FORWARD) || (buttons & IN_BACK) || (buttons & IN_MOVELEFT) || (buttons & IN_MOVERIGHT))
+							if(angles[2] == 0.0) 
 							{
-								ClientPush(jockey, fBuffer);
+								angles[0] = GetRandomFloat(-10.0, 0.0);
+								TeleportEntity(jockey, NULL_VECTOR, angles, NULL_VECTOR);
 							}
+							buttons |= IN_JUMP;
+							switch (GetRandomInt(0, 2))
+							{
+								case 0:
+								{
+									buttons |= IN_DUCK;
+								}
+								case 1:
+								{
+									buttons |= IN_ATTACK2;
+								}
+							}
+							SetState(jockey, 0, IN_JUMP);
 						}
 					}
-					// 不在地上，禁止按下跳跃键和攻击键
 					else
 					{
-						// 锁定视野
-						ComputeAimAngles(jockey, iTarget, fTargetAngles, AimChest);
-						fTargetAngles[2] = 0.0;
-						TeleportEntity(jockey, NULL_VECTOR, fTargetAngles, NULL_VECTOR);
-						buttons &= ~IN_JUMP;
-						buttons &= ~IN_ATTACK;
+						buttons |= IN_JUMP;
+						SetState(jockey, 0, IN_JUMP);
+						if ((buttons & IN_FORWARD) || (buttons & IN_BACK) || (buttons & IN_MOVELEFT) || (buttons & IN_MOVERIGHT))
+						{
+							ClientPush(jockey, fBuffer);
+						}
 					}
+				}
+				// 不在地上，禁止按下跳跃键和攻击键
+				else
+				{
+					buttons &= ~IN_JUMP;
+					buttons &= ~IN_ATTACK;
 				}
 			}
 		}
@@ -184,30 +151,6 @@ public Action OnPlayerRunCmd(int jockey, int &buttons, int &impulse, float vel[3
 	return Plugin_Continue;
 }
 
-void ComputeAimAngles(int client, int target, float angles[3], AimType type = AimEye)
-{
-	float selfpos[3], targetpos[3], lookat[3];
-	GetClientEyePosition(client, selfpos);
-	switch (type)
-	{
-		case AimEye:
-		{
-			GetClientEyePosition(target, targetpos);
-		}
-		case AimBody:
-		{
-			GetClientAbsOrigin(target, targetpos);
-		}
-		case AimChest:
-		{
-			GetClientAbsOrigin(target, targetpos);
-			targetpos[2] += 45.0;
-		}
-	}
-	MakeVectorFromPoints(selfpos, targetpos, lookat);
-	GetVectorAngles(lookat, angles);
-}
-
 public Action evt_PlayerShoved(Event event, const char[] name, bool dontBroadcast)
 {
 	int iShovedPlayer = GetClientOfUserId(event.GetInt("userid"));
@@ -215,6 +158,7 @@ public Action evt_PlayerShoved(Event event, const char[] name, bool dontBroadcas
 	{
 		g_bHasBeenShoved[iShovedPlayer] = true;
 		g_bCanLeap[iShovedPlayer] = false;
+		g_fShovedTime[iShovedPlayer] = GetGameTime();
 		int fLeapCooldown = GetConVarInt(FindConVar("z_jockey_leap_again_timer"));
 		CreateTimer(float(fLeapCooldown), Timer_LeapCoolDown, iShovedPlayer, TIMER_FLAG_NO_MAPCHANGE);
 	}
@@ -237,6 +181,7 @@ public Action evt_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	{
 		g_bHasBeenShoved[iSpawnPlayer] = false;
 		g_bCanLeap[iSpawnPlayer] = true;
+		g_fShovedTime[iSpawnPlayer] = 0.0;
 	}
 	return Plugin_Handled;
 }
@@ -341,7 +286,7 @@ float NearestSurvivorDistance(int client)
 	GetClientAbsOrigin(client, vPos);
 	for (i = 1; i <= MaxClients; i++)
 	{
-		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i) && !IsPinned(client))
+		if (i != client && IsClientInGame(i) && GetClientTeam(i) == TEAM_SURVIVOR && IsPlayerAlive(i) && !IsIncapped(i))
 		{
 			GetClientAbsOrigin(i, vTarget);
 			fDistance[iCount++] = GetVectorDistance(vPos, vTarget);
@@ -353,27 +298,6 @@ float NearestSurvivorDistance(int client)
 	}
 	SortFloats(fDistance, iCount, Sort_Ascending);
 	return fDistance[0];
-}
-
-int NearestSurvivor(int attacker)
-{
-	int iTarget = -1;
-	float minDistance = 100000.0, selfPos[3], targetPos[3];
-	GetClientAbsOrigin(attacker, selfPos);
-	for (int client = 1; client <= MaxClients; ++client)
-	{
-		if (IsSurvivor(client) && IsPlayerAlive(client) && !IsIncapped(client) && !IsPinned(client))
-		{
-			GetClientAbsOrigin(client, targetPos);
-			float fDistance = GetVectorDistance(selfPos, targetPos);
-			if (fDistance < minDistance)
-			{
-				minDistance = fDistance;
-				iTarget = client;
-			}
-		}
-	}
-	return iTarget;
 }
 
 bool IsTargetWatchingAttacker(int attacker, int offset)
@@ -430,13 +354,15 @@ int GetState(int client, int no)
 	return g_iState[client][no];
 }
 
-float UpdatePosition(int jockey, int target, float fForce)
+float[] UpdatePosition(int jockey, int target, float fForce)
 {
-	float fBuffer[3], fTankPos[3], fTargetPos[3];
-	GetClientAbsOrigin(jockey, fTankPos);	GetClientAbsOrigin(target, fTargetPos);
+	float fBuffer[3] = {0.0}, fTankPos[3] = {0.0}, fTargetPos[3] = {0.0};
+	GetClientAbsOrigin(jockey, fTankPos);
+	GetClientAbsOrigin(target, fTargetPos);
 	SubtractVectors(fTargetPos, fTankPos, fBuffer);
 	NormalizeVector(fBuffer, fBuffer);
 	ScaleVector(fBuffer, fForce);
+	fBuffer[2] = 0.0;
 	return fBuffer;
 }
 
@@ -444,9 +370,6 @@ void ClientPush(int client, float fForwardVec[3])
 {
 	float fCurVelVec[3];
 	GetEntPropVector(client, Prop_Data, "m_vecAbsVelocity", fCurVelVec);
-	for (int i = 0; i < 3; i++)
-	{
-		fCurVelVec[i] += fForwardVec[i];
-	}
+	AddVectors(fCurVelVec, fForwardVec, fCurVelVec);
 	TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, fCurVelVec);
 }

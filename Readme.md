@@ -1,6 +1,26 @@
 > 因为Caibiii目前比较忙，很难一个人进行维护，商量后觉得闭源很难进行长时间的维护，所以接下来会陆陆续续将部分代码开源，希望有代码能力可以一起参与这个项目，没有代码能力的服主可以提交issues来反馈测试分支碰到的bug，测试版本稳定后会合并到主分支。
 > 新增测试版docker，docker使用方法请看wiki
 
+## ## 7月修改介绍
+
+- 使用树树子tank2.0和charger 2.0更换ai_tank_new和ai_charger_new
+
+- AI_HardSI_new 被 AI_HardSI_2.0替代，主要用来匹配tank2.0版本，而且删除里面原有的charger，smoker，jockey控制
+
+- tank传送稍微修改传送条件，获取flow失败的时候不进行检测
+
+- ai_smoker_new更新，解决了射线刷特导致smoker刷到半空中成为斗宗强者的问题
+
+- ai_boomer_new属性小幅调整，要不打不到人了，喷人的时候花洒式
+
+- 刷特插件也修复了smoker传送导致的斗宗smoker问题，同时倒地的人视线不会影响特感传送时间累计
+
+- 10特及以上增加AnneHappyPlus武器配置
+
+- 适配ai_jockey_new到7月插件(5月有问题没有加载)
+
+- 优化刷特，降低了对服务器的压力，要不然刷特服务器帧数太难看啦
+
 ## 修改介绍
 
 当前测试分支在电信测试服测试过后，感觉没有很大问题，所以放到测试分支方便有兴趣的服主下载下来测试。
@@ -15,9 +35,9 @@
 #### l4d2_Anne_stuck_tank_teleport.smx(你可以删除，默认安装）
 
 原来那个防卡tank和Anne搭配不好，借鉴infected_control和l4d_tankantistuck，写了这个版本tank防卡和跑男惩罚插件。
-    
-    ChangeLog:
 
+    ChangeLog:
+    
     1.5
         修改tank传送可能被卡住的情况
     

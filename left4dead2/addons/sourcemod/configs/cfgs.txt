@@ -193,6 +193,10 @@
 		{
 			"message" "zonemod2.6.4枪械"
 		}
+		"exec vote/weapon/AnneHappyPlus.cfg"
+		{
+			"message" "zonemod2.6.4枪械"
+		}
 	}
 	"Tank选项"
 	{

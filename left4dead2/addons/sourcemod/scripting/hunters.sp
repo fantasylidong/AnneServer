@@ -24,7 +24,7 @@ public Plugin myinfo =
 	name 			= "Direct InfectedSpawn",
 	author 			= "Caibiii, 夜羽真白，东",
 	description 	= "特感刷新控制，传送落后特感",
-	version 		= "2022.04.24",
+	version 		= "2022.07.01",
 	url 			= "https://github.com/Caibiii/AnneServer"
 }
 
@@ -97,7 +97,10 @@ public void evt_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (IsAiTank(client)&&IsClientInGame(client) && IsFakeClient(client))
 	{
-		KickClient(client,"1vht模式不允许出现tank");
+		if(!L4D_IsMissionFinalMap())
+			KickClient(client,"1vht模式不允许出现tank");
+		else
+			ForcePlayerSuicide(client);
 	}
 }
 
@@ -300,7 +303,7 @@ public void OnGameFrame()
 						}
 					}
 				}
-				if (count2<=20)
+				if (count2 <= 20)
 				{
 					//Debug_Print("生还者看不到");
 					// 生还数量为 4，循环 4 次，检测此位置到生还的距离是否小于 750 是则刷特，此处可以刷新 1 ~ g_iSiLimit 只特感，如果此处刷完，则上面的 SpawnSpecial 将不再刷特
@@ -530,7 +533,7 @@ public Action SpawnFirstInfected(Handle timer)
 		}
 		if (g_bTeleportSi)
 		{
-			g_hTeleHandle = CreateTimer(0.1, Timer_PositionSi, _, TIMER_REPEAT);
+			g_hTeleHandle = CreateTimer(1.0, Timer_PositionSi, _, TIMER_REPEAT);
 		}
 	}
 	return Plugin_Continue;
@@ -680,6 +683,54 @@ bool PlayerVisibleTo(float spawnpos[3])
 	return false;
 }
 
+//判断该坐标是否可以看到生还或者距离小于300码(传送专属)
+bool TeleportPlayerVisibleTo(float spawnpos[3])
+{
+	float pos[3];
+	g_iSurvivorNum = 0;
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(IsValidSurvivor(i) && IsPlayerAlive(i) && !IsClientIncapped(i))
+		{
+			g_iSurvivors[g_iSurvivorNum] = i;
+			g_iSurvivorNum++;
+			GetClientEyePosition(i, pos);
+			if(PosIsVisibleTo(i, spawnpos) || GetVectorDistance(spawnpos, pos) < 350.0)
+			{
+				return true;
+			}
+		}	
+	}
+	return false;
+}
+
+/*
+//获取没倒底的最远生还者流程
+float GetFurthestUncappedSurvivorFlow(){
+	float HighestFlow = 0.0;
+	for(int i = 1;i< = MaxClients; i++)
+		if(IsValidSurvivor(i))
+			if(!L4D_IsPlayerIncapacitated(i) || !L4D_IsPlayerPinned(i)){
+				float tmp = L4D2Direct_GetFlowDistance(i);
+				if(tmp > HighestFlow)
+					HighestFlow = tmp;
+		}
+	return HighestFlow;
+}*/
+
+// 判断玩家是否倒地，倒地返回 true，未倒地返回 false
+stock bool IsClientIncapped(int client)
+{
+	if (IsValidClient(client))
+	{
+		return view_as<bool>(GetEntProp(client, Prop_Send, "m_isIncapacitated"));
+	}
+	else
+	{
+		return false;
+	}
+}
+
 //判断从该坐标发射的射线是否击中目标
 bool PosIsVisibleTo(int client, const float targetposition[3])
 {
@@ -810,12 +861,12 @@ public Action Timer_PositionSi(Handle timer)
 		if(CanBeTeleport(client)){
 			float fSelfPos[3] = {0.0};
 			GetClientEyePosition(client, fSelfPos);
-			if (!PlayerVisibleTo(fSelfPos))
+			if (!TeleportPlayerVisibleTo(fSelfPos))
 			{
-				if (g_iTeleCount[client] > 29)
+				if (g_iTeleCount[client] > 3)
 				{
 					Debug_Print("%N开始传送",client);
-					if (!PlayerVisibleTo(fSelfPos) && !IsPinningSomeone(client))
+					if (!TeleportPlayerVisibleTo(fSelfPos) && !IsPinningSomeone(client))
 					{
 						SDKHook(client, SDKHook_PostThinkPost, SDK_UpdateThink);
 						g_iTeleCount[client] = 0;
@@ -853,40 +904,37 @@ int HasAnyCountFull()
 		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client) && !L4D_IsPlayerIncapacitated(client))
 		{
 			g_bIsLate = true;
-			if (iSurvivorIndex < 4)
-			{
-				if(FurthestAlivePlayer==0)
-					FurthestAlivePlayer=client;
-				else if(L4D2Direct_GetFlowDistance(client)>L4D2Direct_GetFlowDistance(FurthestAlivePlayer))
-					FurthestAlivePlayer=client;
-				iSurvivors[iSurvivorIndex] = client;
-				iSurvivorIndex += 1;
-			}
+			if(FurthestAlivePlayer == 0)
+				FurthestAlivePlayer=client;
+			else if(L4D2Direct_GetFlowDistance(client) > L4D2Direct_GetFlowDistance(FurthestAlivePlayer))
+				FurthestAlivePlayer = client;
+			iSurvivors[iSurvivorIndex] = client;
+			iSurvivorIndex += 1;
 		}
 	}
 	if (iSurvivorIndex > 0)
 	{
+		for (int index = 0; index < iSurvivorIndex; index++)
+		{
+			if (IsValidSurvivor(iSurvivors[index]) && IsValidSurvivor(FurthestAlivePlayer) && IsPlayerAlive(iSurvivors[index]) && !IsPinned(iSurvivors[index]) && !L4D_IsPlayerIncapacitated(iSurvivors[index] ))
+			{
+				if(iSurvivors[index] == FurthestAlivePlayer)
+						continue;
+					
+				float abs[3],abs2[3];
+				GetClientAbsOrigin(iSurvivors[index], abs);
+				GetClientAbsOrigin(FurthestAlivePlayer, abs2);
+				if(GetVectorDistance(abs,abs2)> 1200.0)
+				{
+					g_iTargetSurvivor =FurthestAlivePlayer;
+					return iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit;
+				}
+			}
+				
+		}
 		g_iTargetSurvivor = iSurvivors[GetRandomInt(0, iSurvivorIndex - 1)];
 	}
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsValidSurvivor(client) && IsPlayerAlive(client))
-		{
-			if(client == FurthestAlivePlayer)
-				continue;
-			if(FurthestAlivePlayer == 0)
-				break;
-			float abs[3],abs2[3];
-			GetClientAbsOrigin(client,abs);
-			GetClientAbsOrigin(FurthestAlivePlayer,abs2);
-			if(GetVectorDistance(abs,abs2) > 1500.0)
-			{
-				g_iTargetSurvivor = FurthestAlivePlayer;
-				break;
-			}
-		}
-	}
-	return iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit;
+	return iHunterLimit + iSmokerLimit + iBoomerLimit + iSpitterLimit + iJockeyLimit + iChargerLimit;
 }
 
 /*
@@ -943,7 +991,7 @@ void HardTeleMode(int client)
 {
 	static float fEyePos[3] = {0.0}, fSelfEyePos[3] = {0.0};
 	GetClientEyePosition(client, fEyePos);
-	if (!PlayerVisibleTo(fEyePos) && !IsPinningSomeone(client))
+	if (!TeleportPlayerVisibleTo(fEyePos) && !IsPinningSomeone(client))
 	{
 		float fSpawnPos[3] = {0.0}, fSurvivorPos[3] = {0.0}, fDirection[3] = {0.0}, fEndPos[3] = {0.0}, fMins[3] = {0.0}, fMaxs[3] = {0.0};
 		if (IsValidSurvivor(g_iTargetSurvivor))
@@ -965,10 +1013,10 @@ void HardTeleMode(int client)
 //			fVisiblePos[2] =fSpawnPos[2];
 			int count2=0;
 			
-			while (PlayerVisibleTo(fSpawnPos) || !IsOnValidMesh(fSpawnPos) || IsPlayerStuck(fSpawnPos))
+			while (TeleportPlayerVisibleTo(fSpawnPos) || !IsOnValidMesh(fSpawnPos) || IsPlayerStuck(fSpawnPos))
 			{
 				count2 ++;
-				if(count2 > 50)
+				if(count2 > 20)
 				{
 					break;
 				}
@@ -997,7 +1045,7 @@ void HardTeleMode(int client)
 					}
 				}
 			}
-			if (count2<=50)
+			if (count2 <= 20)
 			{
 				for (int count = 0; count < g_iSurvivorNum; count++)
 				{
@@ -1010,6 +1058,7 @@ void HardTeleMode(int client)
 						{
 							TeleportEntity(client, fSpawnPos, NULL_VECTOR, NULL_VECTOR);
 							SDKUnhook(client, SDKHook_PostThinkPost, SDK_UpdateThink);
+							return;
 						}
 					}
 				}

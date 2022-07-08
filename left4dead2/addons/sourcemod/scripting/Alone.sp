@@ -38,7 +38,7 @@ int iHunterLimit,iJockeyLimit,iChargerLimit,iSmokerLimit,iSpitterLimit,iBoomerLi
 // Floats
 float g_fSpawnDistanceMin, g_fSpawnDistanceMax, g_fTeleportDistance, g_fSiInterval;
 // Bools
-bool g_bTeleportSi, g_bIsLate = false;
+bool g_bTeleportSi, g_bIsLate = false, g_bCanRun = false;
 // Handle
 Handle g_hTeleHandle = INVALID_HANDLE;
 // ArrayList
@@ -170,6 +170,7 @@ public void evt_RoundStart(Event event, const char[] name, bool dontBroadcast)
 		g_hTeleHandle = INVALID_HANDLE;
 	}
 	g_bIsLate = false;
+	g_bCanRun = false;
 	g_iSpawnMaxCount = 0;
 	for (int hTimerHandle = aThreadHandle.Length - 1; hTimerHandle >= 0; hTimerHandle--)
 	{
@@ -190,6 +191,7 @@ public void evt_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		g_hTeleHandle = INVALID_HANDLE;
 	}
 	g_bIsLate = false;
+	g_bCanRun = false;
 	g_iSpawnMaxCount = 0;
 	// 从 ArrayList 末端往前判断删除时钟，如果从前往后，因为 ArrayList 会通过前移后面的索引来填补前面擦除的空位，导致有时钟句柄无法擦除
 	for (int hTimerHandle = aThreadHandle.Length - 1; hTimerHandle >= 0; hTimerHandle--)
@@ -237,8 +239,10 @@ public void OnGameFrame()
 	*/
 	if (g_bIsLate && g_iSpawnMaxCount > 0)
 	{
-		if (g_iSiLimit > HasAnyCountFull())
-		{		
+		if (g_iSiLimit > iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit)
+		{	
+			if(g_bCanRun)
+				HasAnyCountFull();			
 			float fSpawnPos[3] = {0.0}, fSurvivorPos[3] = {0.0}, fDirection[3] = {0.0}, fEndPos[3] = {0.0}, fMins[3] = {0.0}, fMaxs[3] = {0.0},dist;	
 			if (IsValidSurvivor(g_iTargetSurvivor))
 			{
@@ -517,6 +521,7 @@ public Action SpawnFirstInfected(Handle timer)
 	if (!g_bIsLate)
 	{
 		g_bIsLate = true;
+		g_bCanRun = true;
 		if (g_hSiInterval.FloatValue > 9.0)
 		{
 			Handle aSpawnTimer = CreateTimer(g_fSiInterval + 8.0, SpawnNewInfected, _, TIMER_REPEAT);
@@ -846,23 +851,53 @@ bool IsSpitter(int client)
 	}
 }
 
-int HasAnyCountFull()
+//优化服务器性能，寻找目标一秒钟一次就行了
+public Action ResetCanRun(Handle timer)
 {
-	int  iSurvivors[4] = {0}, iSurvivorIndex = 0;
+	g_bCanRun = true;
+}
+
+void HasAnyCountFull()
+{
+	g_bCanRun = false;
+	CreateTimer( 1.0 , ResetCanRun);
+	int  iSurvivors[8] = {0}, iSurvivorIndex = 0, FurthestAlivePlayer=0;
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsValidSurvivor(client) && IsPlayerAlive(client) && !IsPinned(client) && !L4D_IsPlayerIncapacitated(client))
 		{
-			g_bIsLate = true;
+			
+			if(FurthestAlivePlayer == 0)
+				FurthestAlivePlayer=client;
+			else if(L4D2Direct_GetFlowDistance(client) > L4D2Direct_GetFlowDistance(FurthestAlivePlayer))
+				FurthestAlivePlayer = client;
 			iSurvivors[iSurvivorIndex] = client;
 			iSurvivorIndex += 1;
 		}
 	}
 	if (iSurvivorIndex > 0)
 	{
+		for (int index = 0; index < iSurvivorIndex; index++)
+		{
+			if (IsValidSurvivor(iSurvivors[index]) && IsValidSurvivor(FurthestAlivePlayer) && IsPlayerAlive(iSurvivors[index]) && !IsPinned(iSurvivors[index]) && !L4D_IsPlayerIncapacitated(iSurvivors[index] ))
+			{
+				if(iSurvivors[index] == FurthestAlivePlayer)
+						continue;
+					
+				float abs[3],abs2[3];
+				GetClientAbsOrigin(iSurvivors[index], abs);
+				GetClientAbsOrigin(FurthestAlivePlayer, abs2);
+				if(GetVectorDistance(abs,abs2)> 800.0)
+				{
+					g_iTargetSurvivor =FurthestAlivePlayer;
+					return ;
+				}
+			}
+				
+		}
 		g_iTargetSurvivor = iSurvivors[GetRandomInt(0, iSurvivorIndex - 1)];
 	}
-	return iHunterLimit+iSmokerLimit+iBoomerLimit+iSpitterLimit+iJockeyLimit+iChargerLimit;
+	return;
 }
 
 /*
@@ -990,8 +1025,8 @@ void HardTeleMode(int client)
 							if(IsAiSmoker(client))
 							{
 								SetConVarInt(FindConVar("tongue_range"),9999);
-								BlockSmokerTongue(client);
-								CreateTimer(0.5,ResetTougueRange);
+								CreateTimer(0.3,ResetTougueRange);
+								BlockSmokerTongue(client);								
 							}
 							return;
 						}
@@ -1008,7 +1043,7 @@ void BlockSmokerTongue(int client)
 	int ability = GetEntPropEnt(client, Prop_Send, "m_customAbility");
 	if (IsValidEntity(ability))
 	{
-			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.5);
+			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.3);
 	}
 }
 

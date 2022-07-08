@@ -86,6 +86,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		GetClientAbsOrigin(client, self_pos);
 		GetClientEyePosition(client, self_eye_pos);
 		// 上抬视野，可喷的生还者人数大于 0 且不在 cd 时间内，转视野和上抬视野
+		// bile target num 0是目标总数，1是当前目标索引，2是循环次数
 		if (bile_target_num[client][0] > 0 && g_hTurnVision.BoolValue && !in_bile_interval[client])
 		{
 			if (IsValidSurvivor(bile_target[client][bile_target_num[client][1]]) && bile_target_num[client][2] <= g_hTurnInterval.IntValue)
@@ -124,7 +125,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				TeleportEntity(client, NULL_VECTOR, bile_target_pos, NULL_VECTOR);
 				bile_target_num[client][2] += 1;
 			}
-			else
+			else if(bile_target_num[client][1] < MAXPLAYERS +1)
 			{
 				bile_target_num[client][1] += 1;
 				bile_target_num[client][2] = 0;
@@ -297,10 +298,10 @@ bool ClientPush(int client, float vec[3])
 	float curvel[3] = {0.0};
 	GetEntPropVector(client, Prop_Data, "m_vecAbsVelocity", curvel);
 	AddVectors(curvel, vec, curvel);
-	if (GetVectorLength(curvel) <= 250.0)
+	if (GetVectorLength(curvel) <= 300.0)
 	{
 		NormalizeVector(curvel, curvel);
-		ScaleVector(curvel, 251.0);
+		ScaleVector(curvel, 301.0);
 	}
 	TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, curvel);
 	return true;

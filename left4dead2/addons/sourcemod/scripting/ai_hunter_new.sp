@@ -51,7 +51,7 @@ public void OnPluginStart()
 	g_hStraightPounceDistance = CreateConVar("ai_HunterStraightPounceDistance", "200.0", "Hunter在离生还者多近时允许直扑", FCVAR_NOTIFY, true, 0.0);
 	g_hHunterAimOffset = CreateConVar("ai_HunterAimOffset", "360", "目标与Hunter处在这一角度范围内，Hunter将不会直扑", FCVAR_NOTIFY, true, 0.0, true, 360.0);
 	g_hWallPounceDistance = CreateConVar("ai_HunterWallDetectDistance", "-1", "在这个范围内，Hunter突袭时将会优先检测是否有墙体", FCVAR_NOTIFY);
-	g_hHunterTarget = CreateConVar("ai_HunterTarget", "3", "Hunter目标选择：1=自然目标选择，2=最近目标，3=手持非霰弹枪的生还者", FCVAR_NOTIFY, true, 1.0, true, 3.0);
+	g_hHunterTarget = CreateConVar("ai_HunterTarget", "1", "Hunter目标选择：1=自然目标选择，2=最近目标，3=手持非霰弹枪的生还者", FCVAR_NOTIFY, true, 1.0, true, 3.0);
 	g_hMeleeAvoid = CreateConVar("ai_HunterMeleeAvoid", "0", "Hunter是否回避手持近战的玩家", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hShotGunCheckRange = CreateConVar("ai_HunterShotGunCheckRange", "250.0", "目标选择为3时，Hunter在大于这个距离时允许进行目标枪械检测", FCVAR_NOTIFY, true, 0.0);
 	// HookEvents

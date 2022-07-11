@@ -35,8 +35,8 @@ public void OnPluginStart()
 	// CreateConVars
 	g_hAllowBhop = CreateConVar("ai_ChargerBhop", "1", "是否开启 Charger 连跳", CVAR_FLAG, true, 0.0, true, 1.0);
 	g_hBhopSpeed = CreateConVar("ai_ChagrerBhopSpeed", "90.0", "Charger 连跳速度", CVAR_FLAG, true, 0.0);
-	g_hChargeDist = CreateConVar("ai_ChargerChargeDistance", "150.0", "Charger 只能在与目标小于这一距离时冲锋", CVAR_FLAG, true, 0.0);
-	g_hAimOffset = CreateConVar("ai_ChargerAimOffset", "30.0", "目标的瞄准水平与 Charger 处在这一范围内，Charger 不会冲锋", CVAR_FLAG, true, 0.0);
+	g_hChargeDist = CreateConVar("ai_ChargerChargeDistance", "400.0", "Charger 只能在与目标小于这一距离时冲锋", CVAR_FLAG, true, 0.0);
+	g_hAimOffset = CreateConVar("ai_ChargerAimOffset", "15.0", "目标的瞄准水平与 Charger 处在这一范围内，Charger 不会冲锋", CVAR_FLAG, true, 0.0);
 	g_hAllowMeleeAvoid = CreateConVar("ai_ChargerMeleeAvoid", "1", "是否开启 Charger 近战回避", CVAR_FLAG, true, 0.0, true, 1.0);
 	g_hChargerMeleeDamage = CreateConVar("ai_ChargerMeleeDamage", "350", "Charger 血量小于这个值，将不会直接冲锋拿着近战的生还者", CVAR_FLAG, true, 0.0);
 	g_hChargerTarget = CreateConVar("ai_ChargerTarget", "1", "Charger目标选择：1=自然目标选择，2=优先取最近目标，3=优先撞人多处", CVAR_FLAG, true, 1.0, true, 2.0);
@@ -133,7 +133,7 @@ public void evt_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (IsCharger(client))
 	{
-		// 牛生成时，将冲锋时间戳记为 0.0 - 冲锋 CD 的时间，否则由于刚开始小于冲锋 CD 会导致无法对没看着自身的目标挥拳而是直接冲锋
+		// 牛生成时，设置为可冲锋
 		charger_cancharge[client] = true;
 	}
 }
@@ -238,12 +238,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		}
 		else if (!IsInChargeDuration(client) && (buttons &= ~IN_ATTACK))
 		{
+			//PrintToChatAll("距离在可冲锋范围外，且此次操作不是冲锋按键，封锁冲锋功能" );
 			BlockCharge(client);
 			buttons |= IN_ATTACK2;
 		}
 		// 连跳，并阻止冲锋，可以攻击被控的人的时，将最小距离置 0，连跳追上被控的人
-		int min_dist = can_attack_pinned[client] ? 0 : g_hChargeDist.IntValue;
-		if (has_sight && g_hAllowBhop.BoolValue && min_dist < closet_survivor_distance < 10000 && cur_speed > 175.0 && IsValidSurvivor(target))
+		//int min_dist = can_attack_pinned[client] ? 0 : g_hChargeDist.IntValue;
+		//PrintToChatAll("has_sight:%d cur_speed:%f distance:%d cancharger:%d cantime:%d" , has_sight, cur_speed, closet_survivor_distance, charger_cancharge[client], GetChargerTime(client));
+		if (has_sight && g_hAllowBhop.BoolValue && 0 < closet_survivor_distance < 10000 && cur_speed > 175.0 && IsValidSurvivor(target))
 		{
 			if (flags & FL_ONGROUND)
 			{
@@ -275,7 +277,7 @@ public Action L4D2_OnChooseVictim(int specialInfected, int &curTarget)
 		float self_pos[3] = {0.0}, target_pos[3] = {0.0};
 		GetClientEyePosition(specialInfected, self_pos);
 		// 获取在冲锋范围内的目标
-		FindRangedClients(specialInfected, 2.0 * g_hChargeDist.FloatValue);
+		FindRangedClients(specialInfected, g_hChargeDist.FloatValue *1.25);
 		if (IsValidSurvivor(curTarget) && IsPlayerAlive(curTarget))
 		{
 			GetClientEyePosition(curTarget, target_pos);
@@ -286,6 +288,7 @@ public Action L4D2_OnChooseVictim(int specialInfected, int &curTarget)
 				{
 					can_attack_pinned[specialInfected] = true;
 					curTarget = ranged_client[specialInfected][i];
+					//PrintToChatAll("范围内有人被控且自身血量大于限制血量，则先去对被控的人挥拳");
 					BlockCharge(specialInfected);
 					return Plugin_Changed;
 				}
@@ -301,12 +304,14 @@ public Action L4D2_OnChooseVictim(int specialInfected, int &curTarget)
 					if (Client_MeleeCheck(curTarget) && melee_num < survivor_num && IsValidSurvivor(new_target) && Player_IsVisible_To(specialInfected, new_target))
 					{
 						curTarget = new_target;
+						//PrintToChatAll("允许近战回避且目标正拿着近战武器且血量高于冲锋限制血量，随机获取一个没有拿着近战武器且可视的目标，转移目标");
 						return Plugin_Changed;
 					}
 				}
 				// 不满足近战回避距离限制或血量要求的牛，阻止其冲锋，令其对手持近战的目标挥拳
 				else if (g_hAllowMeleeAvoid.BoolValue && Client_MeleeCheck(curTarget) && !IsInChargeDuration(specialInfected) && (GetVectorDistance(self_pos, target_pos) < g_hChargeDist.FloatValue || GetClientHealth(specialInfected) >= g_hChargerMeleeDamage.IntValue))
 				{
+					//PrintToChatAll(" 不满足近战回避距离限制或血量要求的牛，阻止其冲锋，令其对手持近战的目标挥拳");
 					BlockCharge(curTarget);
 				}
 				// 目标选择
@@ -473,10 +478,22 @@ bool Is_InGetUp_Or_Incapped(int client)
 void BlockCharge(int client)
 {
 	int ability = GetEntPropEnt(client, Prop_Send, "m_customAbility");
-	if (IsValidEntity(ability) && GetEntProp(ability, Prop_Send, "m_isCharging") != 1)
+	if (IsValidEntity(ability) && GetEntProp(ability, Prop_Send, "m_isCharging") != 1 && (GetEntPropFloat(ability, Prop_Send, "m_timestamp")  < GetGameTime()))
 	{
-			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.3);
+			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.1);
+			//PrintToChatAll("牛牛%N 被阻止冲锋" , client);
 	}
+	
+}
+
+stock bool GetChargerTime(int client)
+{
+	int ability = GetEntPropEnt(client, Prop_Send, "m_customAbility");
+	if (IsValidEntity(ability))
+	{
+		return GetEntPropFloat(ability, Prop_Send, "m_timestamp") - GetGameTime() < 0.0;
+	}
+	return false;
 }
 
 // 让牛冲锋
@@ -485,8 +502,10 @@ void SetCharge(int client)
 	int ability = GetEntPropEnt(client, Prop_Send, "m_customAbility");
 	if (IsValidEntity(ability) && GetEntProp(ability, Prop_Send, "m_isCharging") != 1 && GetEntPropFloat(ability, Prop_Send, "m_timestamp") < GetGameTime() + 1.0)
 	{
-		SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() - 0.3);
+		SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() - 0.5);
+		//PrintToChatAll("牛牛%N 设置为可冲锋",client);
 	}
+	
 }
 
 // 是否在冲锋间隔
@@ -539,10 +558,10 @@ bool ClientPush(int client, float vec[3])
 	float curvel[3] = {0.0};
 	GetEntPropVector(client, Prop_Data, "m_vecAbsVelocity", curvel);
 	AddVectors(curvel, vec, curvel);
-	if (GetVectorLength(curvel) <= 250.0)
+	if (GetVectorLength(curvel) <= 350.0)
 	{
 		NormalizeVector(curvel, curvel);
-		ScaleVector(curvel, 251.0);
+		ScaleVector(curvel, 351.0);
 	}
 	TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, curvel);
 	return true;

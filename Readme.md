@@ -9,7 +9,7 @@
 
 - tank传送稍微修改传送条件，获取flow失败的时候不进行检测
 
-- ai_smoker_new更新，解决了射线刷特导致smoker刷到半空中成为斗宗强者的问题
+- ~~ai_smoker_new更新，解决了射线刷特导致smoker刷到半空中成为斗宗强者的问题~~
 
 - ai_boomer_new属性小幅调整，要不打不到人了，喷人的时候花洒式
 
@@ -24,7 +24,6 @@
 - 增加自动更新插件，自动更新test分支的最近更新(比较大版本可能需要手动更新，小版本更新每天自动更新，其中updater.smx为更新工具，AnneUpdater为Anne插件自动更新插件，自动更新的具体插件下面有)
 
 - 刷特再次大幅优化，而且刷特的spawnpos小幅修改，让特感生成位置更加多样，L4D2_VScriptWrapper_NavAreaBuildPath改为L4D2_NavAreaBuildPath检测由vscript脚本模式改为sdkcalls模式，检测更加严格且准确。[left4dhooks版本需要大于1.110，谢谢Silvers大佬帮忙实现了东的request，感谢他的支持和帮助]
-
 
 ### 自动更新的插件
 

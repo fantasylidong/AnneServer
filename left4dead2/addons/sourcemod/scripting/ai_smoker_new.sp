@@ -43,7 +43,7 @@ public void OnPluginStart()
 	g_hSmokerBhop = CreateConVar("ai_SmokerBhop", "1", "是否开启Smoker连跳", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hSmokerBhopSpeed = CreateConVar("ai_SmokerBhopSpeed", "80.0", "Smoker连跳的速度", FCVAR_NOTIFY, true, 0.0);
 	g_hTargetChoose = CreateConVar("ai_SmokerTarget", "1", "Smoker优先选择的目标：1=距离最近，2=手持喷子的人（无则最近），3=落单者或超前者（无则最近），4=正在换弹的人（无则最近）", FCVAR_NOTIFY, true, 1.0, true, 4.0);
-	g_hMeleeAvoid = CreateConVar("ai_SmokerMeleeAvoid", "1", "Smoker的目标如果手持近战则切换目标", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_hMeleeAvoid = CreateConVar("ai_SmokerMeleeAvoid", "0", "Smoker的目标如果手持近战则切换目标", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_hSmokerInterval = FindConVar("tongue_hit_delay");
 	g_hLeftDistance = CreateConVar("ai_SmokerLeftBehindDistance", "7.0", "玩家距离团队多远判定为落后或超前", FCVAR_NOTIFY, true, 0.0);
 	g_hDistancePercent = CreateConVar("ai_SmokerDistantPercent", "0.80", "舌头如果处在这个系数 * 舌头长度的距离范围内，则会立刻拉人", FCVAR_NOTIFY, true, 0.0);
@@ -52,7 +52,7 @@ public void OnPluginStart()
 	SetConVarFloat(g_hCvarTongueDelay, SMOKER_TONGUE_DELAY);
 	// HookEvent
 	HookEvent("round_start", evtRoundStart);
-	HookEvent("player_spawn", evt_PlayerSpawn);
+	//HookEvent("player_spawn", evt_PlayerSpawn);
 
 	// AddChangeHooks
 	g_hCvarTongueDelay.AddChangeHook(ConVarChanged_Cvars);
@@ -67,7 +67,7 @@ public void OnPluginStart()
 	// GetCvars
 	GetCvars();
 }
-
+/*
 // ***** 事件 *****
 public void evt_PlayerSpawn(Event event, const char[] name, bool dontBroadCast)
 {
@@ -79,8 +79,8 @@ public void evt_PlayerSpawn(Event event, const char[] name, bool dontBroadCast)
 		//if(!(flags & FL_ONGROUND))
 		//{
 		SetConVarInt(g_hTongueRange,9999);
+		CreateTimer(0.3,ResetTougueRange);
 		BlockSmokerTongue(client);
-		CreateTimer(0.5,ResetTougueRange);
 		//}
 
 	}
@@ -92,7 +92,7 @@ void BlockSmokerTongue(int client)
 	int ability = GetEntPropEnt(client, Prop_Send, "m_customAbility");
 	if (IsValidEntity(ability) && bCanSmoker[client])
 	{
-			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.5);
+			SetEntPropFloat(ability, Prop_Send, "m_timestamp", GetGameTime() + 0.3);
 	}
 }
 
@@ -102,6 +102,7 @@ public Action ResetTougueRange(Handle timer,int client)
 	bCanSmoker[client] = true;
 	SetConVarInt(g_hTongueRange,750);
 }
+*/
 
 void ConVarChanged_Cvars(ConVar convar, const char[] oldValue, const char[] newValue)
 {
